@@ -100,16 +100,16 @@ local function restoreDefault()
     lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
 end
 
-tabFarming:AddDropdown("Anti Lag Color", function(value)
+local colorDropdown = tabFarming:AddDropdown("Anti Lag Color", function(value)
     currentColor = value
     applyColor(currentColor)
-end, {
-    "Black",
-    "White",
-    "Blue",
-    "Red",
-    "Purple",
-})
+end)
+
+colorDropdown:Add("Black")
+colorDropdown:Add("White")
+colorDropdown:Add("Blue")
+colorDropdown:Add("Red")
+colorDropdown:Add("Purple")
 
 tabFarming:AddButton("Enable Anti Lag", function()
     for _, obj in pairs(workspace:GetDescendants()) do
