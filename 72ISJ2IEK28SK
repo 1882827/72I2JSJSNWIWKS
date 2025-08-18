@@ -12,6 +12,7 @@ local player = game.Players.LocalPlayer
 local muscleEvent = player:WaitForChild("muscleEvent")
 local runFastRep = false
 local repsPerTick = 30
+local RunService = game:GetService("RunService")
 
 local function getPing()
     local stats = game:GetService("Stats")
@@ -21,15 +22,13 @@ end
 
 local function fastRepLoop()
     while runFastRep do
-        local startTime = tick()
-        while tick() - startTime < 0.75 and runFastRep do
-            for i = 1, repsPerTick do
-                muscleEvent:FireServer("rep")
-            end
-            task.wait(0.02)
+        for i = 1, repsPerTick do
+            muscleEvent:FireServer("rep")
         end
 
-        while runFastRep and getPing() >= 100 do
+        RunService.Heartbeat:Wait()
+
+        if getPing() >= 100 then
             task.wait(1)
         end
     end
