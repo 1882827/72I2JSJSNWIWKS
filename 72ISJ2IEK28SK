@@ -1,0 +1,130 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/MlFrvWM/BBLT81/main/BL81827TC", true))()
+
+local window = library:AddWindow("Sad v1.0.0 | Farming", {
+    main_color = Color3.fromRGB(20, 82, 24),
+    min_size = Vector2.new(550, 450),
+    can_resize = false,
+})
+
+local tabFarming = window:AddTab("Farming")
+
+local player = game.Players.LocalPlayer
+local muscleEvent = player:WaitForChild("muscleEvent")
+local runFastRep = false
+local repsPerTick = 30
+
+local function getPing()
+    local stats = game:GetService("Stats")
+    local pingStat = stats:FindFirstChild("PerformanceStats") and stats.PerformanceStats:FindFirstChild("Ping")
+    return pingStat and pingStat:GetValue() or 0
+end
+
+local function fastRepLoop()
+    while runFastRep do
+        local startTime = tick()
+        while tick() - startTime < 0.75 and runFastRep do
+            for i = 1, repsPerTick do
+                muscleEvent:FireServer("rep")
+            end
+            task.wait(0.02)
+        end
+
+        while runFastRep and getPing() >= 100 do
+            task.wait(1)
+        end
+    end
+end
+
+tabFarming:AddSwitch("Fast Rep", function(state)
+    runFastRep = state
+    if runFastRep then
+        task.spawn(fastRepLoop)
+    end
+end)
+
+local player = game.Players.LocalPlayer
+local lighting = game:GetService("Lighting")
+
+local currentColor = "White"
+
+local colors = {
+    ["Black"] = Color3.fromRGB(0, 0, 0),
+    ["White"] = Color3.fromRGB(255, 255, 255),
+    ["Blue"] = Color3.fromRGB(150, 180, 255),
+    ["Red"] = Color3.fromRGB(255, 100, 100),
+    ["Purple"] = Color3.fromRGB(180, 100, 255),
+}
+
+local function applyColor(colorName)
+    local color = colors[colorName] or Color3.fromRGB(255,255,255)
+    for _, v in pairs(lighting:GetChildren()) do
+        if v:IsA("Sky") then
+            v:Destroy()
+        end
+    end
+    local simpleSky = Instance.new("Sky")
+    simpleSky.Name = "SimpleSky"
+    simpleSky.SkyboxBk = "rbxassetid://271042516"
+    simpleSky.SkyboxDn = "rbxassetid://271077243"
+    simpleSky.SkyboxFt = "rbxassetid://271042556"
+    simpleSky.SkyboxLf = "rbxassetid://271042310"
+    simpleSky.SkyboxRt = "rbxassetid://271042467"
+    simpleSky.SkyboxUp = "rbxassetid://271079665"
+    simpleSky.Parent = lighting
+    lighting.Brightness = 2
+    lighting.ClockTime = 14
+    lighting.OutdoorAmbient = color
+    lighting.Ambient = color
+    lighting.FogColor = color
+    lighting.FogEnd = 100000
+end
+
+local function restoreDefault()
+    for _, v in pairs(lighting:GetChildren()) do
+        if v:IsA("Sky") then
+            v:Destroy()
+        end
+    end
+    local defaultSky = Instance.new("Sky")
+    defaultSky.SkyboxBk = "rbxassetid://271042516"
+    defaultSky.SkyboxDn = "rbxassetid://271077243"
+    defaultSky.SkyboxFt = "rbxassetid://271042556"
+    defaultSky.SkyboxLf = "rbxassetid://271042310"
+    defaultSky.SkyboxRt = "rbxassetid://271042467"
+    defaultSky.SkyboxUp = "rbxassetid://271079665"
+    defaultSky.Parent = lighting
+    lighting.Brightness = 2
+    lighting.ClockTime = "12:00:00"
+    lighting.FogEnd = 100000
+    lighting.Ambient = Color3.fromRGB(128,128,128)
+    lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+end
+
+tabFarming:AddDropdown("Anti Lag Color", function(value)
+    currentColor = value
+    applyColor(currentColor)
+end, {
+    "Black",
+    "White",
+    "Blue",
+    "Red",
+    "Purple",
+})
+
+tabFarming:AddButton("Enable Anti Lag", function()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+            obj:Destroy()
+        end
+    end
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+            obj:Destroy()
+        end
+    end
+    applyColor(currentColor)
+end)
+
+tabFarming:AddButton("Disable Anti Lag", function()
+    restoreDefault()
+end)
