@@ -79,26 +79,26 @@ for colorName, _ in pairs(colors) do
 end
 
 local lighting = game:GetService("Lighting")
-local colorCorrection = Instance.new("ColorCorrectionEffect")
-colorCorrection.Name = "AntiLagEffect"
-colorCorrection.Parent = lighting
+local player = game.Players.LocalPlayer
+local antiLagRunning = false
+local antiLagLoop
 
-local function enableAntiLag()
+local function darkenSky()
     for _, v in pairs(lighting:GetChildren()) do
         if v:IsA("Sky") then
             v:Destroy()
         end
     end
 
-    local sky = Instance.new("Sky")
-    sky.Name = "CustomSky"
-    sky.SkyboxBk = "rbxassetid://0"
-    sky.SkyboxDn = "rbxassetid://0"
-    sky.SkyboxFt = "rbxassetid://0"
-    sky.SkyboxLf = "rbxassetid://0"
-    sky.SkyboxRt = "rbxassetid://0"
-    sky.SkyboxUp = "rbxassetid://0"
-    sky.Parent = lighting
+    local customSky = Instance.new("Sky")
+    customSky.Name = "AntiLagSky"
+    customSky.SkyboxBk = "rbxassetid://0"
+    customSky.SkyboxDn = "rbxassetid://0"
+    customSky.SkyboxFt = "rbxassetid://0"
+    customSky.SkyboxLf = "rbxassetid://0"
+    customSky.SkyboxRt = "rbxassetid://0"
+    customSky.SkyboxUp = "rbxassetid://0"
+    customSky.Parent = lighting
 
     lighting.Brightness = 0
     lighting.ClockTime = 0
@@ -106,22 +106,65 @@ local function enableAntiLag()
     lighting.Ambient = selectedColor
     lighting.FogColor = selectedColor
     lighting.FogEnd = 100
+end
 
-    colorCorrection.Enabled = true
-    colorCorrection.TintColor = selectedColor
+local function removeGUIs()
+    local playerGui = player:WaitForChild("PlayerGui")
+    for _, gui in pairs(playerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") then
+            gui:Destroy()
+        end
+    end
+end
 
+local function removeParticleEffects()
     for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
-            obj:Destroy()
-        elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+        if obj:IsA("ParticleEmitter") then
             obj:Destroy()
         end
     end
 end
 
+local function removeLightSources()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+            obj:Destroy()
+        end
+    end
+end
+
+local function enableAntiLag()
+    antiLagRunning = true
+
+    removeGUIs()
+    removeParticleEffects()
+    removeLightSources()
+    darkenSky()
+
+    antiLagLoop = task.spawn(function()
+        while antiLagRunning do
+            task.wait(5)
+            if not lighting:FindFirstChild("AntiLagSky") then
+                darkenSky()
+            end
+            lighting.Brightness = 0
+            lighting.ClockTime = 0
+            lighting.Ambient = selectedColor
+            lighting.FogColor = selectedColor
+            lighting.FogEnd = 100
+        end
+    end)
+end
+
 local function disableAntiLag()
+    antiLagRunning = false
+    if antiLagLoop then
+        task.cancel(antiLagLoop)
+        antiLagLoop = nil
+    end
+
     for _, v in pairs(lighting:GetChildren()) do
-        if v:IsA("Sky") or v.Name == "CustomSky" then
+        if v:IsA("Sky") or v.Name == "AntiLagSky" then
             v:Destroy()
         end
     end
@@ -132,8 +175,6 @@ local function disableAntiLag()
     lighting.Ambient = Color3.fromRGB(127, 127, 127)
     lighting.FogColor = Color3.fromRGB(192, 192, 192)
     lighting.FogEnd = 100000
-
-    colorCorrection.Enabled = false
 
     local defaultSky = Instance.new("Sky")
     defaultSky.Name = "DefaultSky"
