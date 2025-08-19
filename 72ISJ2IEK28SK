@@ -11,120 +11,151 @@ local tabFarming = window:AddTab("Farming")
 local player = game.Players.LocalPlayer
 local muscleEvent = player:WaitForChild("muscleEvent")
 local runFastRep = false
-local repsPerTick = 30
+local repsPerTick = 1
 
-local RunService = game:GetService("RunService")
+local function getPing()
+    local stats = game:GetService("Stats")
+    local pingStat = stats:FindFirstChild("PerformanceStats") and stats.PerformanceStats:FindFirstChild("Ping")
+    return pingStat and pingStat:GetValue() or 0
+end
+
+tabFarming:AddTextBox("Rep Speed", function(value)
+    local num = tonumber(value)
+    if num and num > 0 then
+        repsPerTick = math.floor(num)
+    end
+end, {
+    placeholder = "1",
+})
 
 local function fastRepLoop()
-    RunService.Heartbeat:Connect(function()
-        if runFastRep then
+    while runFastRep do
+        local startTime = tick()
+        while tick() - startTime < 0.75 and runFastRep do
             for i = 1, repsPerTick do
                 muscleEvent:FireServer("rep")
             end
+            task.wait(0.02)
         end
-    end)
-end
 
-fastRepLoop()
+        while runFastRep and getPing() >= 100 do
+            task.wait(1)
+        end
+    end
+end
 
 tabFarming:AddSwitch("Fast Rep", function(state)
     runFastRep = state
+    if runFastRep then
+        task.spawn(fastRepLoop)
+    else
+        print("")
+    end
 end)
-
-local player = game.Players.LocalPlayer
-local lighting = game:GetService("Lighting")
-
-local currentColor = "White"
 
 local colors = {
     ["Black"] = Color3.fromRGB(0, 0, 0),
     ["White"] = Color3.fromRGB(255, 255, 255),
-    ["Blue"] = Color3.fromRGB(150, 180, 255),
-    ["Red"] = Color3.fromRGB(255, 100, 100),
-    ["Purple"] = Color3.fromRGB(180, 100, 255),
+    ["Blue"] = Color3.fromRGB(100, 150, 255),
+    ["Red"] = Color3.fromRGB(255, 0, 0),
+    ["Purple"] = Color3.fromRGB(180, 0, 255)
 }
 
-local function applyColor(colorName)
-    local color = colors[colorName] or Color3.fromRGB(255,255,255)
-    for _, v in pairs(lighting:GetChildren()) do
-        if v:IsA("Sky") then
-            v:Destroy()
-        end
-    end
-    local simpleSky = Instance.new("Sky")
-    simpleSky.Name = "SimpleSky"
-    simpleSky.SkyboxBk = "rbxassetid://271042516"
-    simpleSky.SkyboxDn = "rbxassetid://271077243"
-    simpleSky.SkyboxFt = "rbxassetid://271042556"
-    simpleSky.SkyboxLf = "rbxassetid://271042310"
-    simpleSky.SkyboxRt = "rbxassetid://271042467"
-    simpleSky.SkyboxUp = "rbxassetid://271079665"
-    simpleSky.Parent = lighting
-    lighting.Brightness = 2
-    lighting.ClockTime = 14
-    lighting.OutdoorAmbient = color
-    lighting.Ambient = color
-    lighting.FogColor = color
-    lighting.FogEnd = 100000
-end
+local selectedColor = colors["Black"]
 
-local function restoreDefault()
-    for _, v in pairs(lighting:GetChildren()) do
-        if v:IsA("Sky") then
-            v:Destroy()
-        end
-    end
-    local defaultSky = Instance.new("Sky")
-    defaultSky.SkyboxBk = "rbxassetid://271042516"
-    defaultSky.SkyboxDn = "rbxassetid://271077243"
-    defaultSky.SkyboxFt = "rbxassetid://271042556"
-    defaultSky.SkyboxLf = "rbxassetid://271042310"
-    defaultSky.SkyboxRt = "rbxassetid://271042467"
-    defaultSky.SkyboxUp = "rbxassetid://271079665"
-    defaultSky.Parent = lighting
-    lighting.Brightness = 2
-    lighting.ClockTime = "12:00:00"
-    lighting.FogEnd = 100000
-    lighting.Ambient = Color3.fromRGB(128,128,128)
-    lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
-end
-
-local colorDropdown = tabFarming:AddDropdown("Anti Lag Color", function(value)
-    currentColor = value
-    applyColor(currentColor)
+tabFarming:AddDropdown("Anti Lag Color", {"Black", "White", "Blue", "Red", "Purple"}, function(option)
+    selectedColor = colors[option]
 end)
 
-colorDropdown:Add("Black")
-colorDropdown:Add("White")
-colorDropdown:Add("Blue")
-colorDropdown:Add("Red")
-colorDropdown:Add("Purple")
-
 tabFarming:AddButton("Enable Anti Lag", function()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
-            obj:Destroy()
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local lighting = game:GetService("Lighting")
+
+    for _, gui in pairs(playerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") then
+            gui:Destroy()
         end
     end
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-            obj:Destroy()
+
+    local function customSky()
+        for _, v in pairs(lighting:GetChildren()) do
+            if v:IsA("Sky") then
+                v:Destroy()
+            end
+        end
+
+        local sky = Instance.new("Sky")
+        sky.Name = "CustomSky"
+        sky.SkyboxBk = "rbxassetid://0"
+        sky.SkyboxDn = "rbxassetid://0"
+        sky.SkyboxFt = "rbxassetid://0"
+        sky.SkyboxLf = "rbxassetid://0"
+        sky.SkyboxRt = "rbxassetid://0"
+        sky.SkyboxUp = "rbxassetid://0"
+        sky.Parent = lighting
+
+        lighting.Brightness = 0
+        lighting.ClockTime = 0
+        lighting.TimeOfDay = "00:00:00"
+        lighting.OutdoorAmbient = selectedColor
+        lighting.Ambient = selectedColor
+        lighting.FogColor = selectedColor
+        lighting.FogEnd = 100
+
+        task.spawn(function()
+            while true do
+                wait(5)
+                if not lighting:FindFirstChild("CustomSky") then
+                    sky:Clone().Parent = lighting
+                end
+                lighting.Brightness = 0
+                lighting.ClockTime = 0
+                lighting.OutdoorAmbient = selectedColor
+                lighting.Ambient = selectedColor
+                lighting.FogColor = selectedColor
+                lighting.FogEnd = 100
+            end
+        end)
+    end
+
+    local function removeParticleEffects()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") then
+                obj:Destroy()
+            end
         end
     end
-    applyColor(currentColor)
+
+    local function removeLightSources()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+                obj:Destroy()
+            end
+        end
+    end
+
+    removeParticleEffects()
+    removeLightSources()
+    customSky()
 end)
 
 tabFarming:AddButton("Disable Anti Lag", function()
-    restoreDefault()
-end)
+    local lighting = game:GetService("Lighting")
 
-tabFarming:AddSwitch("Hide All Frames", function(bool)
-    local rSto = game:GetService("ReplicatedStorage")
-    for _, obj in pairs(rSto:GetChildren()) do
-        if obj.Name:match("Frame$") then
-            obj.Visible = not bool
+    for _, v in pairs(lighting:GetChildren()) do
+        if v:IsA("Sky") or v.Name == "CustomSky" then
+            v:Destroy()
         end
     end
+
+    lighting.Brightness = 2
+    lighting.ClockTime = 14
+    lighting.TimeOfDay = "14:00:00"
+    lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    lighting.Ambient = Color3.fromRGB(128, 128, 128)
+    lighting.FogColor = Color3.fromRGB(192, 192, 192)
+    lighting.FogEnd = 100000
 end)
 
 local statsTab = window:AddTab("Stats")
