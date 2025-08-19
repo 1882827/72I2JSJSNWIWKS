@@ -3,13 +3,20 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 local function formatNumber(num)
+    if num == 0 then
+        return "0"
+    end
     local suffixes = {"", "K", "M", "B", "T", "Qa", "Qi"}
     local i = 1
     while num >= 1000 and i < #suffixes do
         num = num / 1000
         i = i + 1
     end
-    return string.format("%.2f%s", num, suffixes[i])
+    if math.floor(num) == num then
+        return string.format("%d%s", num, suffixes[i])
+    else
+        return string.format("%.2f%s", num, suffixes[i])
+    end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -22,6 +29,8 @@ Frame.Size = UDim2.new(0, 700, 0, 400)
 Frame.Position = UDim2.new(0.5, -350, 0.1, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
 Frame.Parent = ScreenGui
 
 local Header = Instance.new("Frame")
@@ -46,6 +55,18 @@ for i, text in ipairs(headers) do
     lbl.Parent = Header
 end
 
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
+MinimizeButton.Position = UDim2.new(1, -35, 0, 0)
+MinimizeButton.Text = "-"
+MinimizeButton.Font = Enum.Font.SourceSansBold
+MinimizeButton.TextSize = 20
+MinimizeButton.TextColor3 = Color3.new(1,1,1)
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.Parent = Header
+
+local minimized = false
+
 local PlayerListFrame = Instance.new("ScrollingFrame")
 PlayerListFrame.Size = UDim2.new(1, -10, 1, -50)
 PlayerListFrame.Position = UDim2.new(0, 5, 0, 45)
@@ -53,6 +74,12 @@ PlayerListFrame.CanvasSize = UDim2.new(0,0,0,0)
 PlayerListFrame.ScrollBarThickness = 6
 PlayerListFrame.BackgroundTransparency = 1
 PlayerListFrame.Parent = Frame
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    PlayerListFrame.Visible = not minimized
+    MinimizeButton.Text = minimized and "+" or "-"
+end)
 
 local function createPlayerRow(player, index)
     local row = Instance.new("Frame")
@@ -63,31 +90,33 @@ local function createPlayerRow(player, index)
     row.Parent = PlayerListFrame
 
     local stats = player:FindFirstChild("leaderstats")
-    local Strength = stats and stats:FindFirstChild("Strength") and stats.Strength.Value or 0
-    local Durability = stats and stats:FindFirstChild("Durability") and stats.Durability.Value or 0
-    local Kills = stats and stats:FindFirstChild("Kills") and stats.Kills.Value or 0
-    local Damage = stats and stats:FindFirstChild("Damage") and stats.Damage.Value or 0
+    if stats then
+        local Strength = stats:WaitForChild("Strength", 1) and stats.Strength.Value or 0
+        local Durability = stats:WaitForChild("Durability", 1) and stats.Durability.Value or 0
+        local Kills = stats:WaitForChild("Kills", 1) and stats.Kills.Value or 0
+        local Damage = stats:WaitForChild("Damage", 1) and stats.Damage.Value or 0
 
-    local values = {
-        player.Name,
-        formatNumber(Strength),
-        formatNumber(Durability),
-        formatNumber(Kills),
-        formatNumber(Damage)
-    }
+        local values = {
+            player.Name,
+            formatNumber(Strength),
+            formatNumber(Durability),
+            formatNumber(Kills),
+            formatNumber(Damage)
+        }
 
-    for i, val in ipairs(values) do
-        local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
-        lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
-        lbl.Text = val
-        lbl.Font = Enum.Font.SourceSansBold
-        lbl.TextSize = 18
-        lbl.TextColor3 = Color3.new(1,1,1)
-        lbl.BackgroundTransparency = 1
-        lbl.TextXAlignment = Enum.TextXAlignment.Center
-        if i == 1 then lbl.TextXAlignment = Enum.TextXAlignment.Left end
-        lbl.Parent = row
+        for i, val in ipairs(values) do
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
+            lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
+            lbl.Text = val
+            lbl.Font = Enum.Font.SourceSansBold
+            lbl.TextSize = 18
+            lbl.TextColor3 = Color3.new(1,1,1)
+            lbl.BackgroundTransparency = 1
+            lbl.TextXAlignment = Enum.TextXAlignment.Center
+            if i == 1 then lbl.TextXAlignment = Enum.TextXAlignment.Left end
+            lbl.Parent = row
+        end
     end
 end
 
