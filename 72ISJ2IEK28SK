@@ -58,7 +58,12 @@ local colors = {
     ["White"] = Color3.fromRGB(255, 255, 255),
     ["Blue"] = Color3.fromRGB(100, 150, 255),
     ["Red"] = Color3.fromRGB(255, 0, 0),
-    ["Purple"] = Color3.fromRGB(180, 0, 255)
+    ["Purple"] = Color3.fromRGB(180, 0, 255),
+    ["Green"] = Color3.fromRGB(0, 255, 0),
+    ["Yellow"] = Color3.fromRGB(255, 255, 0),
+    ["Orange"] = Color3.fromRGB(255, 165, 0),
+    ["Pink"] = Color3.fromRGB(255, 105, 180),
+    ["Cyan"] = Color3.fromRGB(0, 255, 255)
 }
 
 local selectedColor = colors["Black"]
@@ -69,14 +74,11 @@ local dropdown, dropdownObj = tabFarming:AddDropdown("Anti Lag Color", function(
     end
 end)
 
-dropdown:Add("Black")
-dropdown:Add("White")
-dropdown:Add("Blue")
-dropdown:Add("Red")
-dropdown:Add("Purple")
+for colorName, _ in pairs(colors) do
+    dropdown:Add(colorName)
+end
 
-
-tabFarming:AddButton("Enable Anti Lag", function()
+local function enableAntiLag()
     local player = game.Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
     local lighting = game:GetService("Lighting")
@@ -87,69 +89,40 @@ tabFarming:AddButton("Enable Anti Lag", function()
         end
     end
 
-    local function customSky()
-        for _, v in pairs(lighting:GetChildren()) do
-            if v:IsA("Sky") then
-                v:Destroy()
-            end
-        end
-
-        local sky = Instance.new("Sky")
-        sky.Name = "CustomSky"
-        sky.SkyboxBk = "rbxassetid://0"
-        sky.SkyboxDn = "rbxassetid://0"
-        sky.SkyboxFt = "rbxassetid://0"
-        sky.SkyboxLf = "rbxassetid://0"
-        sky.SkyboxRt = "rbxassetid://0"
-        sky.SkyboxUp = "rbxassetid://0"
-        sky.Parent = lighting
-
-        lighting.Brightness = 0
-        lighting.ClockTime = 0
-        lighting.TimeOfDay = "00:00:00"
-        lighting.OutdoorAmbient = selectedColor
-        lighting.Ambient = selectedColor
-        lighting.FogColor = selectedColor
-        lighting.FogEnd = 100
-
-        task.spawn(function()
-            while true do
-                wait(5)
-                if not lighting:FindFirstChild("CustomSky") then
-                    sky:Clone().Parent = lighting
-                end
-                lighting.Brightness = 0
-                lighting.ClockTime = 0
-                lighting.OutdoorAmbient = selectedColor
-                lighting.Ambient = selectedColor
-                lighting.FogColor = selectedColor
-                lighting.FogEnd = 100
-            end
-        end)
-    end
-
-    local function removeParticleEffects()
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("ParticleEmitter") then
-                obj:Destroy()
-            end
+    for _, v in pairs(lighting:GetChildren()) do
+        if v:IsA("Sky") then
+            v:Destroy()
         end
     end
 
-    local function removeLightSources()
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-                obj:Destroy()
-            end
+    local sky = Instance.new("Sky")
+    sky.Name = "CustomSky"
+    sky.SkyboxBk = "rbxassetid://0"
+    sky.SkyboxDn = "rbxassetid://0"
+    sky.SkyboxFt = "rbxassetid://0"
+    sky.SkyboxLf = "rbxassetid://0"
+    sky.SkyboxRt = "rbxassetid://0"
+    sky.SkyboxUp = "rbxassetid://0"
+    sky.Parent = lighting
+
+    lighting.Brightness = 0
+    lighting.ClockTime = 0
+    lighting.TimeOfDay = "00:00:00"
+    lighting.OutdoorAmbient = selectedColor
+    lighting.Ambient = selectedColor
+    lighting.FogColor = selectedColor
+    lighting.FogEnd = 100
+
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") then
+            obj:Destroy()
+        elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+            obj:Destroy()
         end
     end
+end
 
-    removeParticleEffects()
-    removeLightSources()
-    customSky()
-end)
-
-tabFarming:AddButton("Disable Anti Lag", function()
+local function disableAntiLag()
     local lighting = game:GetService("Lighting")
 
     for _, v in pairs(lighting:GetChildren()) do
@@ -161,10 +134,37 @@ tabFarming:AddButton("Disable Anti Lag", function()
     lighting.Brightness = 2
     lighting.ClockTime = 14
     lighting.TimeOfDay = "14:00:00"
-    lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
-    lighting.Ambient = Color3.fromRGB(128, 128, 128)
+    lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+    lighting.Ambient = Color3.fromRGB(127, 127, 127)
     lighting.FogColor = Color3.fromRGB(192, 192, 192)
     lighting.FogEnd = 100000
+
+    local defaultSky = Instance.new("Sky")
+    defaultSky.Name = "DefaultSky"
+    defaultSky.SkyboxBk = "rbxassetid://271042516"
+    defaultSky.SkyboxDn = "rbxassetid://271077243"
+    defaultSky.SkyboxFt = "rbxassetid://271042556"
+    defaultSky.SkyboxLf = "rbxassetid://271042310"
+    defaultSky.SkyboxRt = "rbxassetid://271042467"
+    defaultSky.SkyboxUp = "rbxassetid://271077958"
+    defaultSky.Parent = lighting
+end
+
+tabFarming:AddSwitch("Anti Lag", false, function(state)
+    if state then
+        enableAntiLag()
+    else
+        disableAntiLag()
+    end
+end)
+
+tabFarming:AddSwitch("Hide All Frames", function(bool)
+    local rSto = game:GetService("ReplicatedStorage")
+    for _, obj in pairs(rSto:GetChildren()) do
+        if obj.Name:match("Frame$") then
+            obj.Visible = not bool
+        end
+    end
 end)
 
 local statsTab = window:AddTab("Stats")
