@@ -27,11 +27,11 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 local FloatingButton = Instance.new("TextButton")
 FloatingButton.Size = UDim2.new(0, 200, 0, 50)
 FloatingButton.Position = UDim2.new(0.05, 0, 0.2, 0)
-FloatingButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+FloatingButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128)
 FloatingButton.TextColor3 = Color3.new(1,1,1)
 FloatingButton.Font = Enum.Font.SourceSansBold
 FloatingButton.TextSize = 18
-FloatingButton.Text = "Sad v1.0.0.3 | See Stats"
+FloatingButton.Text = "Sad v1.0.0.2 | See Stats"
 FloatingButton.Parent = ScreenGui
 FloatingButton.Active = true
 FloatingButton.Draggable = true
@@ -109,7 +109,7 @@ MinimizeButton.MouseButton1Click:Connect(function()
         Frame.Size = UDim2.new(0, 700, 0, 40)
         PlayerListFrame.Visible = false
         TitleLabel.Visible = true
-        TitleLabel.Text = "Sad v1.0.0.3 | See Stats"
+        TitleLabel.Text = "Sad v1.0.0.2 | See Stats"
         for _, lbl in ipairs(headerLabels) do
             lbl.Visible = false
         end
