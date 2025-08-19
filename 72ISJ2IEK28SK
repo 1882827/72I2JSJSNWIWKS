@@ -39,8 +39,21 @@ Header.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 Header.BorderSizePixel = 0
 Header.Parent = Frame
 
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(0, 200, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextSize = 20
+TitleLabel.TextColor3 = Color3.new(1,1,1)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Text = ""
+TitleLabel.Visible = false
+TitleLabel.Parent = Header
+
 local columnWidths = {0.25, 0.2, 0.2, 0.15, 0.2}
 local headers = {"Player", "Strength", "Durability", "Kills", "Damage"}
+local headerLabels = {}
 
 for i, text in ipairs(headers) do
     local lbl = Instance.new("TextLabel")
@@ -53,6 +66,7 @@ for i, text in ipairs(headers) do
     lbl.BackgroundTransparency = 1
     lbl.TextXAlignment = Enum.TextXAlignment.Center
     lbl.Parent = Header
+    table.insert(headerLabels, lbl)
 end
 
 local MinimizeButton = Instance.new("TextButton")
@@ -81,10 +95,19 @@ MinimizeButton.MouseButton1Click:Connect(function()
         MinimizeButton.Text = "+"
         Frame.Size = UDim2.new(0, 700, 0, 40)
         PlayerListFrame.Visible = false
+        TitleLabel.Visible = true
+        TitleLabel.Text = "Sad v1.0.0.3| See Stats"
+        for _, lbl in ipairs(headerLabels) do
+            lbl.Visible = false
+        end
     else
         MinimizeButton.Text = "-"
         Frame.Size = UDim2.new(0, 700, 0, 400)
         PlayerListFrame.Visible = true
+        TitleLabel.Visible = false
+        for _, lbl in ipairs(headerLabels) do
+            lbl.Visible = true
+        end
     end
 end)
 
