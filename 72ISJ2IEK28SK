@@ -96,7 +96,7 @@ MinimizeButton.MouseButton1Click:Connect(function()
         Frame.Size = UDim2.new(0, 700, 0, 40)
         PlayerListFrame.Visible = false
         TitleLabel.Visible = true
-        TitleLabel.Text = "Sad v1.0.0.3| See Stats"
+        TitleLabel.Text = "Sad v1.0.0.3 | See Stats"
         for _, lbl in ipairs(headerLabels) do
             lbl.Visible = false
         end
