@@ -68,44 +68,28 @@ local colors = {
 
 local selectedColor = colors["Black"]
 
-local dropdown, dropdownObj = tabFarming:AddDropdown("Anti Lag Color", function(option)
+local dropdown = tabFarming:AddDropdown("Anti Lag Color", function(option)
     if colors[option] then
         selectedColor = colors[option]
+        if _G.AntiLagRunning then
+            applyAntiLag()
+        end
     end
 end)
 
-for colorName, _ in pairs(colors) do
+for colorName in pairs(colors) do
     dropdown:Add(colorName)
 end
 
 local lighting = game:GetService("Lighting")
 local player = game.Players.LocalPlayer
-local antiLagRunning = false
-local antiLagLoop
 
-local function darkenSky()
+local function clearSky()
     for _, v in pairs(lighting:GetChildren()) do
         if v:IsA("Sky") then
             v:Destroy()
         end
     end
-
-    local customSky = Instance.new("Sky")
-    customSky.Name = "AntiLagSky"
-    customSky.SkyboxBk = "rbxassetid://0"
-    customSky.SkyboxDn = "rbxassetid://0"
-    customSky.SkyboxFt = "rbxassetid://0"
-    customSky.SkyboxLf = "rbxassetid://0"
-    customSky.SkyboxRt = "rbxassetid://0"
-    customSky.SkyboxUp = "rbxassetid://0"
-    customSky.Parent = lighting
-
-    lighting.Brightness = 0
-    lighting.ClockTime = 0
-    lighting.TimeOfDay = "00:00:00"
-    lighting.Ambient = selectedColor
-    lighting.FogColor = selectedColor
-    lighting.FogEnd = 100
 end
 
 local function removeGUIs()
@@ -133,42 +117,32 @@ local function removeLightSources()
     end
 end
 
-local function enableAntiLag()
-    antiLagRunning = true
-
+function applyAntiLag()
     removeGUIs()
     removeParticleEffects()
     removeLightSources()
-    darkenSky()
+    clearSky()
 
-    antiLagLoop = task.spawn(function()
-        while antiLagRunning do
-            task.wait(5)
-            if not lighting:FindFirstChild("AntiLagSky") then
-                darkenSky()
-            end
-            lighting.Brightness = 0
-            lighting.ClockTime = 0
-            lighting.Ambient = selectedColor
-            lighting.FogColor = selectedColor
-            lighting.FogEnd = 100
-        end
-    end)
+    local customSky = Instance.new("Sky")
+    customSky.Name = "AntiLagSky"
+    customSky.SkyboxBk = "rbxassetid://0"
+    customSky.SkyboxDn = "rbxassetid://0"
+    customSky.SkyboxFt = "rbxassetid://0"
+    customSky.SkyboxLf = "rbxassetid://0"
+    customSky.SkyboxRt = "rbxassetid://0"
+    customSky.SkyboxUp = "rbxassetid://0"
+    customSky.Parent = lighting
+
+    lighting.Brightness = 0
+    lighting.ClockTime = 0
+    lighting.TimeOfDay = "00:00:00"
+    lighting.Ambient = selectedColor
+    lighting.FogColor = selectedColor
+    lighting.FogEnd = 100
 end
 
-local function disableAntiLag()
-    antiLagRunning = false
-    if antiLagLoop then
-        task.cancel(antiLagLoop)
-        antiLagLoop = nil
-    end
-
-    for _, v in pairs(lighting:GetChildren()) do
-        if v:IsA("Sky") or v.Name == "AntiLagSky" then
-            v:Destroy()
-        end
-    end
-
+local function restoreDefault()
+    clearSky()
     lighting.Brightness = 2
     lighting.ClockTime = 14
     lighting.TimeOfDay = "14:00:00"
@@ -188,10 +162,11 @@ local function disableAntiLag()
 end
 
 tabFarming:AddSwitch("Anti Lag", false, function(state)
+    _G.AntiLagRunning = state
     if state then
-        enableAntiLag()
+        applyAntiLag()
     else
-        disableAntiLag()
+        restoreDefault()
     end
 end)
 
