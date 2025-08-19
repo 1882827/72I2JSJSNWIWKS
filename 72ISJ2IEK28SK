@@ -1,299 +1,95 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/MlFrvWM/BBLT81/main/BL81827TC", true))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-local window = library:AddWindow("Sad v1.0.0 | Farming", {
-    main_color = Color3.fromRGB(20, 82, 24),
-    min_size = Vector2.new(550, 450),
-    can_resize = false,
-})
-
-local tabFarming = window:AddTab("Farming")
-
-local player = game.Players.LocalPlayer
-local muscleEvent = player:WaitForChild("muscleEvent")
-local runFastRep = false
-local repsPerTick = 1
-
-local function getPing()
-    local stats = game:GetService("Stats")
-    local pingStat = stats:FindFirstChild("PerformanceStats") and stats.PerformanceStats:FindFirstChild("Ping")
-    return pingStat and pingStat:GetValue() or 0
+local function formatNumber(num)
+    local suffixes = {"", "K", "M", "B", "T", "Qa", "Qi"}
+    local i = 1
+    while num >= 1000 and i < #suffixes do
+        num = num / 1000
+        i = i + 1
+    end
+    return string.format("%.2f%s", num, suffixes[i])
 end
 
-tabFarming:AddTextBox("Rep Speed", function(value)
-    local num = tonumber(value)
-    if num and num > 0 then
-        repsPerTick = math.floor(num)
-    end
-end, {
-    placeholder = "1",
-})
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LeaderboardGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local function fastRepLoop()
-    while runFastRep do
-        local startTime = tick()
-        while tick() - startTime < 0.75 and runFastRep do
-            for i = 1, repsPerTick do
-                muscleEvent:FireServer("rep")
-            end
-            task.wait(0.02)
-        end
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 700, 0, 380)
+Frame.Position = UDim2.new(0.5, -350, 0.1, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
 
-        while runFastRep and getPing() >= 100 do
-            task.wait(1)
-        end
-    end
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Title.BorderSizePixel = 0
+Title.Text = "Player                  Strength                  Durability                  Kills                  Damage"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+Title.Parent = Frame
+
+local PlayerListFrame = Instance.new("ScrollingFrame")
+PlayerListFrame.Size = UDim2.new(1, -10, 1, -50)
+PlayerListFrame.Position = UDim2.new(0, 5, 0, 45)
+PlayerListFrame.CanvasSize = UDim2.new(0,0,0,0)
+PlayerListFrame.ScrollBarThickness = 6
+PlayerListFrame.BackgroundTransparency = 1
+PlayerListFrame.Parent = Frame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = PlayerListFrame
+
+local function createPlayerRow(player)
+    local row = Instance.new("TextLabel")
+    row.Size = UDim2.new(1, -10, 0, 30)
+    row.BackgroundTransparency = 1
+    row.TextColor3 = Color3.new(1,1,1)
+    row.Font = Enum.Font.SourceSans
+    row.TextSize = 18
+    row.TextXAlignment = Enum.TextXAlignment.Left
+    row.Text = ""
+    row.Name = player.Name
+    row.Parent = PlayerListFrame
+    return row
 end
 
-tabFarming:AddSwitch("Fast Rep", function(state)
-    runFastRep = state
-    if runFastRep then
-        task.spawn(fastRepLoop)
-    else
-        print("")
-    end
-end)
-
-local colors = {
-    ["Black"] = Color3.fromRGB(0, 0, 0),
-    ["White"] = Color3.fromRGB(255, 255, 255),
-    ["Blue"] = Color3.fromRGB(100, 150, 255),
-    ["Red"] = Color3.fromRGB(255, 0, 0),
-    ["Purple"] = Color3.fromRGB(180, 0, 255),
-    ["Green"] = Color3.fromRGB(0, 255, 0),
-    ["Yellow"] = Color3.fromRGB(255, 255, 0),
-    ["Orange"] = Color3.fromRGB(255, 165, 0),
-    ["Pink"] = Color3.fromRGB(255, 105, 180),
-    ["Cyan"] = Color3.fromRGB(0, 255, 255)
-}
-
-local selectedColor = colors["Black"]
-local lighting = game:GetService("Lighting")
-local player = game.Players.LocalPlayer
-
-local dropdown = tabFarming:AddDropdown("Anti Lag Color", function(option)
-    if colors[option] then
-        selectedColor = colors[option]
-        if _G.AntiLagRunning then
-            applyAntiLag()
+local function updateLeaderboard()
+    for _, row in pairs(PlayerListFrame:GetChildren()) do
+        if row:IsA("TextLabel") then
+            row:Destroy()
         end
     end
-end)
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        local stats = player:FindFirstChild("leaderstats")
+        if stats then
+            local Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
+            local Durability = stats:FindFirstChild("Durability") and stats.Durability.Value or 0
+            local Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
+            local Damage = stats:FindFirstChild("Damage") and stats.Damage.Value or 0
 
-for colorName in pairs(colors) do
-    dropdown:Add(colorName)
-end
-
-local function clearSky()
-    for _, v in pairs(lighting:GetChildren()) do
-        if v:IsA("Sky") then
-            v:Destroy()
+            local row = createPlayerRow(player)
+            row.Text = string.format(
+                "%-20s   %-20s   %-20s   %-20s   %-20s",
+                player.DisplayName,
+                formatNumber(Strength),
+                formatNumber(Durability),
+                formatNumber(Kills),
+                formatNumber(Damage)
+            )
         end
     end
+    
+    PlayerListFrame.CanvasSize = UDim2.new(0,0,0,#Players:GetPlayers() * 32)
 end
 
-local function removeGUIs()
-    local playerGui = player:WaitForChild("PlayerGui")
-    for _, gui in pairs(playerGui:GetChildren()) do
-        if gui:IsA("ScreenGui") then
-            gui:Destroy()
-        end
-    end
-end
-
-local function removeParticleEffects()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("ParticleEmitter") then
-            obj:Destroy()
-        end
-    end
-end
-
-local function removeLightSources()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-            obj:Destroy()
-        end
-    end
-end
-
-function applyAntiLag()
-    removeGUIs()
-    removeParticleEffects()
-    removeLightSources()
-    clearSky()
-
-    local darkSky = Instance.new("Sky")
-    darkSky.Name = "AntiLagSky"
-    darkSky.SkyboxBk = "rbxassetid://0"
-    darkSky.SkyboxDn = "rbxassetid://0"
-    darkSky.SkyboxFt = "rbxassetid://0"
-    darkSky.SkyboxLf = "rbxassetid://0"
-    darkSky.SkyboxRt = "rbxassetid://0"
-    darkSky.SkyboxUp = "rbxassetid://0"
-    darkSky.Parent = lighting
-
-    lighting.Brightness = 0
-    lighting.ClockTime = 0
-    lighting.TimeOfDay = "00:00:00"
-    lighting.OutdoorAmbient = selectedColor
-    lighting.Ambient = selectedColor
-    lighting.FogColor = selectedColor
-    lighting.FogEnd = 100
-
-    task.spawn(function()
-        while _G.AntiLagRunning do
-            task.wait(5)
-            if not lighting:FindFirstChild("AntiLagSky") then
-                darkSky:Clone().Parent = lighting
-            end
-            lighting.Brightness = 0
-            lighting.ClockTime = 0
-            lighting.OutdoorAmbient = selectedColor
-            lighting.Ambient = selectedColor
-            lighting.FogColor = selectedColor
-            lighting.FogEnd = 100
-        end
-    end)
-end
-
-local function restoreDefault()
-    clearSky()
-
-    lighting.Brightness = 2
-    lighting.ClockTime = 14
-    lighting.TimeOfDay = "14:00:00"
-    lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
-    lighting.Ambient = Color3.fromRGB(127, 127, 127)
-    lighting.FogColor = Color3.fromRGB(192, 192, 192)
-    lighting.FogEnd = 100000
-
-    local defaultSky = Instance.new("Sky")
-    defaultSky.Name = "DefaultSky"
-    defaultSky.SkyboxBk = "rbxassetid://271042516"
-    defaultSky.SkyboxDn = "rbxassetid://271077243"
-    defaultSky.SkyboxFt = "rbxassetid://271042556"
-    defaultSky.SkyboxLf = "rbxassetid://271042310"
-    defaultSky.SkyboxRt = "rbxassetid://271042467"
-    defaultSky.SkyboxUp = "rbxassetid://271077958"
-    defaultSky.Parent = lighting
-end
-
-tabFarming:AddSwitch("Anti Lag", false, function(state)
-    _G.AntiLagRunning = state
-    if state then
-        applyAntiLag()
-    else
-        restoreDefault()
-    end
-end)
-
-tabFarming:AddSwitch("Hide All Frames", function(bool)
-    local rSto = game:GetService("ReplicatedStorage")
-    for _, obj in pairs(rSto:GetChildren()) do
-        if obj.Name:match("Frame$") then
-            obj.Visible = not bool
-        end
-    end
-end)
-
-local statsTab = window:AddTab("Stats")
-
-local player = game.Players.LocalPlayer
-local leaderstats = player:WaitForChild("leaderstats")
-local strengthStat = leaderstats:WaitForChild("Strength")
-local durabilityStat = player:WaitForChild("Durability")
-
-local function formatNumber(number)
-    local isNegative = number < 0
-    number = math.abs(number)
-
-    if number >= 1e15 then
-        return (isNegative and "-" or "") .. string.format("%.2fQa", number / 1e15)
-    elseif number >= 1e12 then
-        return (isNegative and "-" or "") .. string.format("%.2fT", number / 1e12)
-    elseif number >= 1e9 then
-        return (isNegative and "-" or "") .. string.format("%.2fB", number / 1e9)
-    elseif number >= 1e6 then
-        return (isNegative and "-" or "") .. string.format("%.2fM", number / 1e6)
-    elseif number >= 1e3 then
-        return (isNegative and "-" or "") .. string.format("%.2fK", number / 1e3)
-    else
-        return (isNegative and "-" or "") .. string.format("%.2f", number)
-    end
-end
-
-local timeLabel = statsTab:AddLabel("â±ï¸ Time:")
-timeLabel.TextSize = 24
-
-local stopwatchLabel = statsTab:AddLabel("0d 0h 0m 0s")
-stopwatchLabel.TextSize = 20
-
-statsTab:AddLabel("").TextSize = 10
-
-local projectedLabel = statsTab:AddLabel("ðŸ“Š Projected Pace")
-projectedLabel.TextSize = 24
-
-local projectedStrengthLabel = statsTab:AddLabel("Strength Pace: 0 /Hour | 0 /Day")
-projectedStrengthLabel.TextSize = 20
-
-local projectedDurabilityLabel = statsTab:AddLabel("Durability Pace: 0 /Hour | 0 /Day")
-projectedDurabilityLabel.TextSize = 20
-
-statsTab:AddLabel("").TextSize = 10
-
-local statsLabel = statsTab:AddLabel("ðŸ’ª Current Stats")
-statsLabel.TextSize = 24
-
-local strengthLabel = statsTab:AddLabel("Strength: 0 | Gained: 0")
-strengthLabel.TextSize = 20
-
-local durabilityLabel = statsTab:AddLabel("Durability: 0 | Gained: 0")
-durabilityLabel.TextSize = 20
-
-local startTime = tick()
-local initialStrength = strengthStat.Value
-local initialDurability = durabilityStat.Value
-
-task.spawn(function()
-    local lastUpdate = 0
-
-    while true do
-        local currentTime = tick()
-        local elapsedTime = currentTime - startTime
-        local days = math.floor(elapsedTime / (24 * 3600))
-        local hours = math.floor((elapsedTime % (24 * 3600)) / 3600)
-        local minutes = math.floor((elapsedTime % 3600) / 60)
-        local seconds = math.floor(elapsedTime % 60)
-
-        stopwatchLabel.Text = string.format("%dd %dh %dm %ds", days, hours, minutes, seconds)
-
-        local currentStrength = strengthStat.Value
-        local currentDurability = durabilityStat.Value
-
-        local sessionStrengthDelta = currentStrength - initialStrength
-        local sessionDurabilityDelta = currentDurability - initialDurability
-
-        strengthLabel.Text = "Strength: " .. formatNumber(currentStrength) .. " | Gained: " .. formatNumber(sessionStrengthDelta)
-        durabilityLabel.Text = "Durability: " .. formatNumber(currentDurability) .. " | Gained: " .. formatNumber(sessionDurabilityDelta)
-
-        if currentTime - lastUpdate >= 6 then
-            lastUpdate = currentTime
-
-            local strengthPerSecond = sessionStrengthDelta / elapsedTime
-            local durabilityPerSecond = sessionDurabilityDelta / elapsedTime
-
-            local secondsPerHour = 3600
-            local secondsPerDay = 86400
-
-            local strengthPerHour = math.floor(strengthPerSecond * secondsPerHour)
-            local durabilityPerHour = math.floor(durabilityPerSecond * secondsPerHour)
-
-            local projectedStrength = math.floor(strengthPerSecond * secondsPerDay)
-            local projectedDurability = math.floor(durabilityPerSecond * secondsPerDay)
-
-            projectedStrengthLabel.Text = "Strength Pace: " .. formatNumber(strengthPerHour) .. "/Hour | " .. formatNumber(projectedStrength) .. "/Day"
-            projectedDurabilityLabel.Text = "Durability Pace: " .. formatNumber(durabilityPerHour) .. "/Hour | " .. formatNumber(projectedDurability) .. "/Day"
-        end
-        task.wait(0.05)
-    end
-end)
+RunService.Heartbeat:Connect(updateLeaderboard)
+Players.PlayerAdded:Connect(updateLeaderboard)
+Players.PlayerRemoving:Connect(updateLeaderboard)
