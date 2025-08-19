@@ -77,8 +77,18 @@ PlayerListFrame.Parent = Frame
 
 MinimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
-    PlayerListFrame.Visible = not minimized
-    MinimizeButton.Text = minimized and "+" or "-"
+    Frame.Visible = not minimized
+    if minimized then
+        MinimizeButton.Text = "+"
+        Frame.Visible = true
+        Header.Visible = true
+        PlayerListFrame.Visible = false
+        Frame.Size = UDim2.new(0, 700, 0, 40)
+    else
+        MinimizeButton.Text = "-"
+        PlayerListFrame.Visible = true
+        Frame.Size = UDim2.new(0, 700, 0, 400)
+    end
 end)
 
 local function createPlayerRow(player, index)
@@ -90,33 +100,34 @@ local function createPlayerRow(player, index)
     row.Parent = PlayerListFrame
 
     local stats = player:FindFirstChild("leaderstats")
+    local Strength, Durability, Kills, Damage = 0,0,0,0
     if stats then
-        local Strength = stats:WaitForChild("Strength", 1) and stats.Strength.Value or 0
-        local Durability = stats:WaitForChild("Durability", 1) and stats.Durability.Value or 0
-        local Kills = stats:WaitForChild("Kills", 1) and stats.Kills.Value or 0
-        local Damage = stats:WaitForChild("Damage", 1) and stats.Damage.Value or 0
+        Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
+        Durability = stats:FindFirstChild("Durability") and stats.Durability.Value or 0
+        Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
+        Damage = stats:FindFirstChild("Damage") and stats.Damage.Value or 0
+    end
 
-        local values = {
-            player.Name,
-            formatNumber(Strength),
-            formatNumber(Durability),
-            formatNumber(Kills),
-            formatNumber(Damage)
-        }
+    local values = {
+        player.Name,
+        formatNumber(Strength),
+        formatNumber(Durability),
+        formatNumber(Kills),
+        formatNumber(Damage)
+    }
 
-        for i, val in ipairs(values) do
-            local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
-            lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
-            lbl.Text = val
-            lbl.Font = Enum.Font.SourceSansBold
-            lbl.TextSize = 18
-            lbl.TextColor3 = Color3.new(1,1,1)
-            lbl.BackgroundTransparency = 1
-            lbl.TextXAlignment = Enum.TextXAlignment.Center
-            if i == 1 then lbl.TextXAlignment = Enum.TextXAlignment.Left end
-            lbl.Parent = row
-        end
+    for i, val in ipairs(values) do
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
+        lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
+        lbl.Text = val
+        lbl.Font = Enum.Font.SourceSansBold
+        lbl.TextSize = 18
+        lbl.TextColor3 = Color3.new(1,1,1)
+        lbl.BackgroundTransparency = 1
+        lbl.TextXAlignment = Enum.TextXAlignment.Center
+        if i == 1 then lbl.TextXAlignment = Enum.TextXAlignment.Left end
+        lbl.Parent = row
     end
 end
 
