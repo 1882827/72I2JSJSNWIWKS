@@ -63,11 +63,18 @@ local colors = {
 
 local selectedColor = colors["Black"]
 
-tabFarming:AddDropdown("Anti Lag Color", {"Black", "White", "Blue", "Red", "Purple"}, function(option)
+local dropdown, dropdownObj = tabFarming:AddDropdown("Anti Lag Color", function(option)
     if colors[option] then
         selectedColor = colors[option]
     end
 end)
+
+dropdown:Add("Black")
+dropdown:Add("White")
+dropdown:Add("Blue")
+dropdown:Add("Red")
+dropdown:Add("Purple")
+
 
 tabFarming:AddButton("Enable Anti Lag", function()
     local player = game.Players.LocalPlayer
