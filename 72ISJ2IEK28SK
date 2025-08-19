@@ -26,7 +26,7 @@ Frame.Parent = ScreenGui
 
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 40)
-Header.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Header.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 Header.BorderSizePixel = 0
 Header.Parent = Frame
 
@@ -68,7 +68,13 @@ local function createPlayerRow(player, index)
     local Kills = stats and stats:FindFirstChild("Kills") and stats.Kills.Value or 0
     local Damage = stats and stats:FindFirstChild("Damage") and stats.Damage.Value or 0
 
-    local values = {player.DisplayName, formatNumber(Strength), formatNumber(Durability), formatNumber(Kills), formatNumber(Damage)}
+    local values = {
+        player.Name,
+        formatNumber(Strength),
+        formatNumber(Durability),
+        formatNumber(Kills),
+        formatNumber(Damage)
+    }
 
     for i, val in ipairs(values) do
         local lbl = Instance.new("TextLabel")
