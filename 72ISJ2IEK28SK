@@ -77,17 +77,14 @@ PlayerListFrame.Parent = Frame
 
 MinimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
-    Frame.Visible = not minimized
     if minimized then
         MinimizeButton.Text = "+"
-        Frame.Visible = true
-        Header.Visible = true
-        PlayerListFrame.Visible = false
         Frame.Size = UDim2.new(0, 700, 0, 40)
+        PlayerListFrame.Visible = false
     else
         MinimizeButton.Text = "-"
-        PlayerListFrame.Visible = true
         Frame.Size = UDim2.new(0, 700, 0, 400)
+        PlayerListFrame.Visible = true
     end
 end)
 
@@ -99,36 +96,44 @@ local function createPlayerRow(player, index)
     row.BorderSizePixel = 0
     row.Parent = PlayerListFrame
 
-    local stats = player:FindFirstChild("leaderstats")
-    local Strength, Durability, Kills, Damage = 0,0,0,0
-    if stats then
-        Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
-        Durability = stats:FindFirstChild("Durability") and stats.Durability.Value or 0
-        Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
-        Damage = stats:FindFirstChild("Damage") and stats.Damage.Value or 0
-    end
+    local labels = {}
 
-    local values = {
-        player.Name,
-        formatNumber(Strength),
-        formatNumber(Durability),
-        formatNumber(Kills),
-        formatNumber(Damage)
-    }
-
-    for i, val in ipairs(values) do
+    for i = 1, #headers do
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
         lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
-        lbl.Text = val
         lbl.Font = Enum.Font.SourceSansBold
         lbl.TextSize = 18
         lbl.TextColor3 = Color3.new(1,1,1)
         lbl.BackgroundTransparency = 1
-        lbl.TextXAlignment = Enum.TextXAlignment.Center
-        if i == 1 then lbl.TextXAlignment = Enum.TextXAlignment.Left end
+        lbl.TextXAlignment = (i == 1) and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
         lbl.Parent = row
+        labels[i] = lbl
     end
+
+    RunService.Heartbeat:Connect(function()
+        if not player.Parent then return end
+        local stats = player:FindFirstChild("leaderstats")
+        local Strength, Durability, Kills, Damage = 0,0,0,0
+        if stats then
+            Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
+            Durability = stats:FindFirstChild("Durability") and stats.Durability.Value or 0
+            Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
+            Damage = stats:FindFirstChild("Damage") and stats.Damage.Value or 0
+        end
+
+        local values = {
+            player.Name,
+            formatNumber(Strength),
+            formatNumber(Durability),
+            formatNumber(Kills),
+            formatNumber(Damage)
+        }
+
+        for i, val in ipairs(values) do
+            labels[i].Text = val
+        end
+    end)
 end
 
 local function updateLeaderboard()
@@ -146,6 +151,6 @@ local function updateLeaderboard()
     PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, #players * 35)
 end
 
-RunService.Heartbeat:Connect(updateLeaderboard)
 Players.PlayerAdded:Connect(updateLeaderboard)
 Players.PlayerRemoving:Connect(updateLeaderboard)
+updateLeaderboard()
