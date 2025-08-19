@@ -64,7 +64,9 @@ local colors = {
 local selectedColor = colors["Black"]
 
 tabFarming:AddDropdown("Anti Lag Color", {"Black", "White", "Blue", "Red", "Purple"}, function(option)
-    selectedColor = colors[option]
+    if colors[option] then
+        selectedColor = colors[option]
+    end
 end)
 
 tabFarming:AddButton("Enable Anti Lag", function()
