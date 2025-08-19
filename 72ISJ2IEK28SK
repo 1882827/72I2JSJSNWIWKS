@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
 local function formatNumber(num)
@@ -19,26 +18,11 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 650, 0, 350)
-Frame.Position = UDim2.new(0.5, -325, 0.1, 0)
+Frame.Size = UDim2.new(0, 700, 0, 400)
+Frame.Position = UDim2.new(0.5, -350, 0.1, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-Frame.BackgroundTransparency = 0.1
 Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
 Frame.Parent = ScreenGui
-
-local MinimizeBtn = Instance.new("TextButton")
-MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
-MinimizeBtn.Position = UDim2.new(1, -35, 0, 5)
-MinimizeBtn.Text = "-"
-MinimizeBtn.TextSize = 24
-MinimizeBtn.TextColor3 = Color3.new(1,1,1)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-MinimizeBtn.BorderSizePixel = 0
-MinimizeBtn.Parent = Frame
-
-local minimized = false
 
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 40)
@@ -46,14 +30,13 @@ Header.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 Header.BorderSizePixel = 0
 Header.Parent = Frame
 
-local UIGrid = Instance.new("UIGridLayout")
-UIGrid.FillDirection = Enum.FillDirection.Horizontal
-UIGrid.CellSize = UDim2.new(0.2, 0, 1, 0)
-UIGrid.Parent = Header
-
+local columnWidths = {0.25, 0.2, 0.2, 0.15, 0.2}
 local headers = {"Player", "Strength", "Durability", "Kills", "Damage"}
-for _, text in ipairs(headers) do
+
+for i, text in ipairs(headers) do
     local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
+    lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
     lbl.Text = text
     lbl.Font = Enum.Font.SourceSansBold
     lbl.TextSize = 20
@@ -64,7 +47,7 @@ for _, text in ipairs(headers) do
 end
 
 local PlayerListFrame = Instance.new("ScrollingFrame")
-PlayerListFrame.Size = UDim2.new(1, -10, 1, -55)
+PlayerListFrame.Size = UDim2.new(1, -10, 1, -50)
 PlayerListFrame.Position = UDim2.new(0, 5, 0, 45)
 PlayerListFrame.CanvasSize = UDim2.new(0,0,0,0)
 PlayerListFrame.ScrollBarThickness = 6
@@ -74,25 +57,10 @@ PlayerListFrame.Parent = Frame
 local function createPlayerRow(player, index)
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1, 0, 0, 35)
+    row.Position = UDim2.new(0,0,0,(index-1)*35)
     row.BackgroundColor3 = (index % 2 == 0) and Color3.fromRGB(35, 35, 50) or Color3.fromRGB(25, 25, 40)
     row.BorderSizePixel = 0
     row.Parent = PlayerListFrame
-
-    local UIGrid = Instance.new("UIGridLayout")
-    UIGrid.FillDirection = Enum.FillDirection.Horizontal
-    UIGrid.CellSize = UDim2.new(0.2, 0, 1, 0)
-    UIGrid.Parent = row
-
-    local function makeLabel(txt, alignLeft)
-        local lbl = Instance.new("TextLabel")
-        lbl.Text = txt
-        lbl.Font = Enum.Font.SourceSansBold
-        lbl.TextSize = 18
-        lbl.TextColor3 = Color3.new(1,1,1)
-        lbl.BackgroundTransparency = 1
-        lbl.TextXAlignment = alignLeft and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
-        lbl.Parent = row
-    end
 
     local stats = player:FindFirstChild("leaderstats")
     local Strength = stats and stats:FindFirstChild("Strength") and stats.Strength.Value or 0
@@ -100,11 +68,21 @@ local function createPlayerRow(player, index)
     local Kills = stats and stats:FindFirstChild("Kills") and stats.Kills.Value or 0
     local Damage = stats and stats:FindFirstChild("Damage") and stats.Damage.Value or 0
 
-    makeLabel(player.DisplayName, true)
-    makeLabel(formatNumber(Strength), false)
-    makeLabel(formatNumber(Durability), false)
-    makeLabel(formatNumber(Kills), false)
-    makeLabel(formatNumber(Damage), false)
+    local values = {player.DisplayName, formatNumber(Strength), formatNumber(Durability), formatNumber(Kills), formatNumber(Damage)}
+
+    for i, val in ipairs(values) do
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
+        lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
+        lbl.Text = val
+        lbl.Font = Enum.Font.SourceSansBold
+        lbl.TextSize = 18
+        lbl.TextColor3 = Color3.new(1,1,1)
+        lbl.BackgroundTransparency = 1
+        lbl.TextXAlignment = Enum.TextXAlignment.Center
+        if i == 1 then lbl.TextXAlignment = Enum.TextXAlignment.Left end
+        lbl.Parent = row
+    end
 end
 
 local function updateLeaderboard()
@@ -119,24 +97,9 @@ local function updateLeaderboard()
         createPlayerRow(player, i)
     end
 
-    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, #players * 37)
+    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, #players * 35)
 end
 
 RunService.Heartbeat:Connect(updateLeaderboard)
 Players.PlayerAdded:Connect(updateLeaderboard)
 Players.PlayerRemoving:Connect(updateLeaderboard)
-
-MinimizeBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        PlayerListFrame.Visible = false
-        Header.Visible = false
-        Frame.Size = UDim2.new(0, 200, 0, 50)
-        MinimizeBtn.Text = "+"
-    else
-        PlayerListFrame.Visible = true
-        Header.Visible = true
-        Frame.Size = UDim2.new(0, 650, 0, 350)
-        MinimizeBtn.Text = "-"
-    end
-end)
