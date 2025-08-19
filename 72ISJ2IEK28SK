@@ -78,17 +78,12 @@ for colorName, _ in pairs(colors) do
     dropdown:Add(colorName)
 end
 
+local lighting = game:GetService("Lighting")
+local colorCorrection = Instance.new("ColorCorrectionEffect")
+colorCorrection.Name = "AntiLagEffect"
+colorCorrection.Parent = lighting
+
 local function enableAntiLag()
-    local player = game.Players.LocalPlayer
-    local playerGui = player:WaitForChild("PlayerGui")
-    local lighting = game:GetService("Lighting")
-
-    for _, gui in pairs(playerGui:GetChildren()) do
-        if gui:IsA("ScreenGui") then
-            gui:Destroy()
-        end
-    end
-
     for _, v in pairs(lighting:GetChildren()) do
         if v:IsA("Sky") then
             v:Destroy()
@@ -108,13 +103,15 @@ local function enableAntiLag()
     lighting.Brightness = 0
     lighting.ClockTime = 0
     lighting.TimeOfDay = "00:00:00"
-    lighting.OutdoorAmbient = selectedColor
     lighting.Ambient = selectedColor
     lighting.FogColor = selectedColor
     lighting.FogEnd = 100
 
+    colorCorrection.Enabled = true
+    colorCorrection.TintColor = selectedColor
+
     for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("ParticleEmitter") then
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
             obj:Destroy()
         elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
             obj:Destroy()
@@ -123,8 +120,6 @@ local function enableAntiLag()
 end
 
 local function disableAntiLag()
-    local lighting = game:GetService("Lighting")
-
     for _, v in pairs(lighting:GetChildren()) do
         if v:IsA("Sky") or v.Name == "CustomSky" then
             v:Destroy()
@@ -134,10 +129,11 @@ local function disableAntiLag()
     lighting.Brightness = 2
     lighting.ClockTime = 14
     lighting.TimeOfDay = "14:00:00"
-    lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
     lighting.Ambient = Color3.fromRGB(127, 127, 127)
     lighting.FogColor = Color3.fromRGB(192, 192, 192)
     lighting.FogEnd = 100000
+
+    colorCorrection.Enabled = false
 
     local defaultSky = Instance.new("Sky")
     defaultSky.Name = "DefaultSky"
