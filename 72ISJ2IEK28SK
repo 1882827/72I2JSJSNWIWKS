@@ -9,7 +9,9 @@ local function formatNumber(num)
         num = num / 1000
         i = i + 1
     end
-    return string.format("%.2f%s", num, suffixes[i])
+    local formatted = string.format("%.2f", num)
+    formatted = formatted:gsub("%.00", "")
+    return formatted .. suffixes[i]
 end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -20,19 +22,30 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 700, 0, 380)
 Frame.Position = UDim2.new(0.5, -350, 0.1, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-Title.BorderSizePixel = 0
-Title.Text = "Player                  Strength                  Durability                  Kills                  Damage"
-Title.TextColor3 = Color3.new(1,1,1)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
-Title.Parent = Frame
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Header.BorderSizePixel = 0
+Header.Parent = Frame
+
+local columns = {"Player", "Strength", "Durability", "Kills", "Damage"}
+local columnWidths = {0.25, 0.18, 0.18, 0.18, 0.21}
+
+for i, text in ipairs(columns) do
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(columnWidths[i], 0, 1, 0)
+    label.Position = UDim2.new((i == 1) and 0 or (columnWidths[1] + (i > 2 and (columnWidths[2] + (i > 3 and (columnWidths[3] + (i > 4 and columnWidths[4] or 0)) or 0)) or 0)), 0, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 20
+    label.Parent = Header
+end
 
 local PlayerListFrame = Instance.new("ScrollingFrame")
 PlayerListFrame.Size = UDim2.new(1, -10, 1, -50)
@@ -46,44 +59,55 @@ local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Parent = PlayerListFrame
 
-local function createPlayerRow(player)
-    local row = Instance.new("TextLabel")
+local function createPlayerRow(player, stats)
+    local row = Instance.new("Frame")
     row.Size = UDim2.new(1, -10, 0, 30)
     row.BackgroundTransparency = 1
-    row.TextColor3 = Color3.new(1,1,1)
-    row.Font = Enum.Font.SourceSans
-    row.TextSize = 18
-    row.TextXAlignment = Enum.TextXAlignment.Left
-    row.Text = ""
     row.Name = player.Name
     row.Parent = PlayerListFrame
+
+    local values = {
+        player.DisplayName,
+        formatNumber(stats.Strength or 0),
+        formatNumber(stats.Durability or 0),
+        formatNumber(stats.Kills or 0),
+        formatNumber(stats.Damage or 0)
+    }
+
+    local pos = 0
+    for i, text in ipairs(values) do
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(columnWidths[i], 0, 1, 0)
+        label.Position = UDim2.new(pos, 0, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = Color3.new(1,1,1)
+        label.Font = Enum.Font.SourceSans
+        label.TextSize = 18
+        label.Parent = row
+        pos = pos + columnWidths[i]
+    end
+
     return row
 end
 
 local function updateLeaderboard()
     for _, row in pairs(PlayerListFrame:GetChildren()) do
-        if row:IsA("TextLabel") then
+        if row:IsA("Frame") then
             row:Destroy()
         end
     end
     
     for _, player in pairs(Players:GetPlayers()) do
-        local stats = player:FindFirstChild("leaderstats")
-        if stats then
-            local Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
-            local Durability = stats:FindFirstChild("Durability") and stats.Durability.Value or 0
-            local Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
-            local Damage = stats:FindFirstChild("Damage") and stats.Damage.Value or 0
-
-            local row = createPlayerRow(player)
-            row.Text = string.format(
-                "%-20s   %-20s   %-20s   %-20s   %-20s",
-                player.DisplayName,
-                formatNumber(Strength),
-                formatNumber(Durability),
-                formatNumber(Kills),
-                formatNumber(Damage)
-            )
+        local statsFolder = player:FindFirstChild("leaderstats")
+        if statsFolder then
+            local stats = {
+                Strength = statsFolder:FindFirstChild("Strength") and statsFolder.Strength.Value or 0,
+                Durability = statsFolder:FindFirstChild("Durability") and statsFolder.Durability.Value or 0,
+                Kills = statsFolder:FindFirstChild("Kills") and statsFolder.Kills.Value or 0,
+                Damage = statsFolder:FindFirstChild("Damage") and statsFolder.Damage.Value or 0
+            }
+            createPlayerRow(player, stats)
         end
     end
     
