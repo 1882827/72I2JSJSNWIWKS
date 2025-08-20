@@ -20,23 +20,20 @@ local function formatNumber(num)
 end
 
 local function findStat(plr, statName)
+    local stat = plr:FindFirstChild(statName)
+    if stat and (stat:IsA("IntValue") or stat:IsA("NumberValue")) then
+        return stat
+    end
     local ls = plr:FindFirstChild("leaderstats") or plr:FindFirstChild("Stats")
     if ls then
-        local stat = ls:FindFirstChild(statName)
-        if stat and (stat:IsA("IntValue") or stat:IsA("NumberValue")) then
-            return stat
-        end
-    end
-    -- fallback: busca profunda
-    for _,desc in ipairs(plr:GetDescendants()) do
-        if desc.Name == statName and (desc:IsA("IntValue") or desc:IsA("NumberValue")) then
-            return desc
+        local s = ls:FindFirstChild(statName)
+        if s and (s:IsA("IntValue") or s:IsA("NumberValue")) then
+            return s
         end
     end
     return nil
 end
 
--- UI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "SadUI"
 
@@ -95,7 +92,6 @@ playerList.BackgroundTransparency = 1
 local listLayout = Instance.new("UIListLayout", playerList)
 listLayout.Padding = UDim.new(0,4)
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
 listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     playerList.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y + 10)
 end)
@@ -108,7 +104,6 @@ local function addPlayer(plr)
     frame.BackgroundColor3 = Color3.fromRGB(90,0,180)
     frame.BorderSizePixel = 0
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
-
     playerFrames[plr] = frame
 
     local thumb = Instance.new("ImageLabel", frame)
@@ -154,12 +149,22 @@ local function addPlayer(plr)
         local s = findStat(plr,"Strength")
         if s then strength.Text = "Strength: "..formatNumber(s.Value) end
     end
+
     updateStats()
 
     local d = findStat(plr,"Durability")
     if d then d.Changed:Connect(updateStats) end
     local s = findStat(plr,"Strength")
     if s then s.Changed:Connect(updateStats) end
+
+    plr.ChildAdded:Connect(function(obj)
+        if obj.Name == "Durability" or obj.Name == "Strength" then
+            updateStats()
+            if obj:IsA("IntValue") or obj:IsA("NumberValue") then
+                obj.Changed:Connect(updateStats)
+            end
+        end
+    end)
 end
 
 local function removePlayer(plr)
@@ -180,7 +185,6 @@ closeBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
 
--- Minimizar + nome com cor animada sincronizada
 local minimized = false
 local miniFrame
 minimizeBtn.MouseButton1Click:Connect(function()
@@ -202,7 +206,6 @@ minimizeBtn.MouseButton1Click:Connect(function()
         btn.TextSize = 18
         btn.TextColor3 = Color3.fromRGB(0,100,255)
 
-        -- animação sincronizada de cor
         task.spawn(function()
             while btn.Parent do
                 local t = tick()
