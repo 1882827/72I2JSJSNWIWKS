@@ -125,27 +125,52 @@ local function addPlayer(plr)
     strength.TextXAlignment = Enum.TextXAlignment.Left
 
     local function updateStats()
+        -- tenta direto no Player
+        local d = plr:FindFirstChild("Durability")
+        if d and d.Value then
+            durability.Text = "Durability: "..formatNumber(d.Value)
+        end
+
+        local s = plr:FindFirstChild("Strength")
+        if s and s.Value then
+            strength.Text = "Strength: "..formatNumber(s.Value)
+        end
+
+        -- tenta dentro do leaderstats também
         local stats = plr:FindFirstChild("leaderstats")
         if stats then
-            local d = stats:FindFirstChild("Durability")
-            if d then
-                durability.Text = "Durability: "..formatNumber(d.Value)
+            local d2 = stats:FindFirstChild("Durability")
+            if d2 then
+                durability.Text = "Durability: "..formatNumber(d2.Value)
             end
-            local s = stats:FindFirstChild("Strength")
-            if s then
-                strength.Text = "Strength: "..formatNumber(s.Value)
+            local s2 = stats:FindFirstChild("Strength")
+            if s2 then
+                strength.Text = "Strength: "..formatNumber(s2.Value)
             end
         end
     end
+
     updateStats()
 
+    -- conexões
+    plr.ChildAdded:Connect(function(child)
+        if child.Name == "Durability" or child.Name == "Strength" or child.Name == "leaderstats" then
+            updateStats()
+        end
+    end)
+
+    local function connectValue(val)
+        if val and val:IsA("NumberValue") then
+            val.Changed:Connect(updateStats)
+        end
+    end
+
+    connectValue(plr:FindFirstChild("Durability"))
+    connectValue(plr:FindFirstChild("Strength"))
+
     if plr:FindFirstChild("leaderstats") then
-        if plr.leaderstats:FindFirstChild("Durability") then
-            plr.leaderstats.Durability.Changed:Connect(updateStats)
-        end
-        if plr.leaderstats:FindFirstChild("Strength") then
-            plr.leaderstats.Strength.Changed:Connect(updateStats)
-        end
+        connectValue(plr.leaderstats:FindFirstChild("Durability"))
+        connectValue(plr.leaderstats:FindFirstChild("Strength"))
     end
 end
 
@@ -165,29 +190,24 @@ local miniFrame
 minimizeBtn.MouseButton1Click:Connect(function()
     if not minimized then
         mainFrame.Visible = false
-        miniFrame = Instance.new("Frame", gui)
+        miniFrame = Instance.new("TextButton", gui)
         miniFrame.Size = UDim2.new(0,250,0,40)
         miniFrame.Position = UDim2.new(0.35,0,0,10)
         miniFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        miniFrame.Text = "Sad v1.0.0.2 | See Stats"
+        miniFrame.Font = Enum.Font.SourceSansBold
+        miniFrame.TextSize = 18
+        miniFrame.TextColor3 = Color3.fromRGB(0,100,255)
         miniFrame.Active = true
         miniFrame.Draggable = true
         Instance.new("UICorner", miniFrame).CornerRadius = UDim.new(0,8)
 
-        local miniLabel = Instance.new("TextLabel", miniFrame)
-        miniLabel.Size = UDim2.new(1,0,1,0)
-        miniLabel.BackgroundTransparency = 1
-        miniLabel.Text = "Sad v1.0.0.2 | See Stats"
-        miniLabel.Font = Enum.Font.SourceSansBold
-        miniLabel.TextSize = 18
-        miniLabel.TextColor3 = Color3.fromRGB(0,100,255)
-
-        miniFrame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                mainFrame.Visible = true
-                miniFrame:Destroy()
-                minimized = false
-            end
+        miniFrame.MouseButton1Click:Connect(function()
+            mainFrame.Visible = true
+            miniFrame:Destroy()
+            minimized = false
         end)
+
         minimized = true
     end
 end)
