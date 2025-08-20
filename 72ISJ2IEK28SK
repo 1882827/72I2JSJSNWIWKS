@@ -128,21 +128,6 @@ FloatingButton.MouseButton1Click:Connect(function()
     Frame.Visible = not Frame.Visible
 end)
 
--- 🔎 busca recursiva APENAS dentro de leaderstats
-local function findStatInLeaderstats(leaderstats, statName)
-    local function search(obj)
-        for _, child in ipairs(obj:GetChildren()) do
-            if child.Name == statName and child:IsA("IntValue") then
-                return child
-            end
-            local result = search(child)
-            if result then return result end
-        end
-        return nil
-    end
-    return search(leaderstats)
-end
-
 local function createPlayerRow(player, index)
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1, 0, 0, 35)
@@ -174,12 +159,10 @@ local function createPlayerRow(player, index)
         if stats then
             Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
             Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
-            
-            local dmg = findStatInLeaderstats(stats, "Damage")
-            Damage = dmg and dmg.Value or 0
         end
 
         Durability = player:FindFirstChild("Durability") and player.Durability.Value or 0
+        Damage = player:FindFirstChild("Damage") and player.Damage.Value or 0
 
         local values = {
             player.Name,
