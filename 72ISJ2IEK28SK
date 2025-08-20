@@ -9,9 +9,9 @@ gui.Name = "SadUI"
 -- Janela principal
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.fromScale(0.7, 0.7)
-mainFrame.Position = UDim2.fromScale(0.15, 0.15)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+mainFrame.Size = UDim2.fromScale(0.75, 0.75)
+mainFrame.Position = UDim2.fromScale(0.12, 0.12)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = gui
@@ -25,12 +25,10 @@ titleBar.Parent = mainFrame
 Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,8)
 
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(0.8,0,1,0)
-titleLabel.Position = UDim2.new(0.02,0,0,0)
+titleLabel.Size = UDim2.new(1,0,1,0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextScaled = true
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.TextColor3 = Color3.new(1,1,1)
 titleLabel.Text = "Sad v1.0.02 | See Stats"
 titleLabel.Parent = titleBar
@@ -38,7 +36,7 @@ titleLabel.Parent = titleBar
 -- Botão minimizar
 local minimizeBtn = Instance.new("TextButton")
 minimizeBtn.Size = UDim2.new(0,35,1,0)
-minimizeBtn.Position = UDim2.new(0.88,0,0,0)
+minimizeBtn.Position = UDim2.new(0.9,0,0,0)
 minimizeBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
 minimizeBtn.Text = "-"
 minimizeBtn.Font = Enum.Font.GothamBold
@@ -66,21 +64,21 @@ contentFrame.Position = UDim2.new(0,0,0,35)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Botões superiores
+-- Função criar botão
 local function createTopButton(txt,pos)
 	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(0.3,0,0,40)
+	b.Size = UDim2.new(0.32,0,0,40)
 	b.Position = pos
-	b.BackgroundColor3 = Color3.fromRGB(10,10,10)
+	b.BackgroundColor3 = Color3.fromRGB(0,0,0)
 	b.Font = Enum.Font.GothamBold
 	b.Text = txt
 	b.TextColor3 = Color3.new(1,1,1)
 	b.TextScaled = true
 	b.Parent = contentFrame
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
 	return b
 end
 
+-- Botões superiores
 local autoKill = createTopButton("Auto Kill Player", UDim2.new(0.02,0,0,5))
 local stopAutoKill = createTopButton("Stop Auto Kill", UDim2.new(0.34,0,0,5))
 local disableAnim = createTopButton("Disable Animation Punch", UDim2.new(0.66,0,0,5))
@@ -95,7 +93,6 @@ killAll.Text = "Kill All"
 killAll.TextColor3 = Color3.new(1,1,1)
 killAll.TextScaled = true
 killAll.Parent = contentFrame
-Instance.new("UICorner", killAll).CornerRadius = UDim.new(0,6)
 
 local stopKillAll = Instance.new("TextButton")
 stopKillAll.Size = UDim2.new(0.45,0,0,40)
@@ -106,7 +103,6 @@ stopKillAll.Text = "Stop Kill All"
 stopKillAll.TextColor3 = Color3.new(1,1,1)
 stopKillAll.TextScaled = true
 stopKillAll.Parent = contentFrame
-Instance.new("UICorner", stopKillAll).CornerRadius = UDim.new(0,6)
 
 -- Lista de players
 local listHolder = Instance.new("ScrollingFrame")
@@ -123,7 +119,7 @@ uiList.Padding = UDim.new(0,2)
 uiList.FillDirection = Enum.FillDirection.Vertical
 uiList.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Função formatar números
+-- Formatar números
 local function formatNumber(num)
 	if num == 0 then return "0.00" end
 	local suffixes = {"","K","M","B","T","Qa","Qi"}
@@ -135,7 +131,7 @@ local function formatNumber(num)
 	return string.format("%.2f%s", num, suffixes[i])
 end
 
--- Função criar linha de player
+-- Criar linha player
 local function createPlayerLine(player)
 	local line = Instance.new("Frame")
 	line.Size = UDim2.new(1,0,0,30)
@@ -191,7 +187,7 @@ local function createPlayerLine(player)
 	pastBtn.Parent = line
 
 	RunService.Heartbeat:Connect(function()
-		local dura = player:FindFirstChild("Durability") or player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Durability")
+		local dura = player:FindFirstChild("Durability") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Durability"))
 		if dura and dura.Value then
 			duraLabel.Text = "Durability: " .. formatNumber(dura.Value)
 		else
@@ -216,7 +212,14 @@ end)
 local minimized = false
 minimizeBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
-	contentFrame.Visible = not minimized
+	if minimized then
+		contentFrame.Visible = false
+		mainFrame.Size = UDim2.fromOffset(titleBar.AbsoluteSize.X, 35)
+	else
+		contentFrame.Visible = true
+		mainFrame.Size = UDim2.fromScale(0.75, 0.75)
+		mainFrame.Position = UDim2.fromScale(0.12, 0.12)
+	end
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
