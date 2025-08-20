@@ -1,198 +1,356 @@
+--// Painel de Controle (UI + Lógica segura)
+--// LocalScript (StarterPlayerScripts ou StarterGui)
+
+--=========================
+-- Utilidades
+--=========================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
-local function formatNumber(num)
-    if num == 0 then
-        return "0"
-    end
-    local suffixes = {"", "K", "M", "B", "T", "Qa", "Qi"}
-    local i = 1
-    while num >= 1000 and i < #suffixes do
-        num = num / 1000
-        i = i + 1
-    end
-    if math.floor(num) == num then
-        return string.format("%d%s", num, suffixes[i])
-    else
-        return string.format("%.2f%s", num, suffixes[i]):gsub("%.00", "")
-    end
+local function formatNumber(n)
+	-- 0 deve ser "0" (sem 0.00)
+	if not tonumber(n) then return "0" end
+	n = tonumber(n)
+	if n == 0 then return "0" end
+	local suffixes = {"","K","M","B","T","Qa","Qi"}
+	local i = 1
+	while math.abs(n) >= 1000 and i < #suffixes do
+		n = n / 1000
+		i += 1
+	end
+	-- Inteiros sem casas; senão 2 casas
+	if math.floor(n) == n then
+		return tostring(n)..suffixes[i]
+	else
+		return string.format("%.2f", n)..suffixes[i]
+	end
 end
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "LeaderboardGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local FloatingButton = Instance.new("TextButton")
-FloatingButton.Size = UDim2.new(0, 200, 0, 50)
-FloatingButton.Position = UDim2.new(0.05, 0, 0.2, 0)
-FloatingButton.BackgroundColor3 = Color3.fromRGB(61, 10, 161)
-FloatingButton.TextColor3 = Color3.new(1,1,1)
-FloatingButton.Font = Enum.Font.SourceSansBold
-FloatingButton.TextSize = 18
-FloatingButton.Text = "Sad v1.0.0.2 | See Stats"
-FloatingButton.Parent = ScreenGui
-FloatingButton.Active = true
-FloatingButton.Draggable = true
-
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 700, 0, 400)
-Frame.Position = UDim2.new(0.5, -350, 0.1, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
-Frame.Parent = ScreenGui
-Frame.Visible = false
-
-local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 40)
-Header.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-Header.BorderSizePixel = 0
-Header.Parent = Frame
-
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(0, 200, 1, 0)
-TitleLabel.Position = UDim2.new(0, 10, 0, 0)
-TitleLabel.Font = Enum.Font.SourceSansBold
-TitleLabel.TextSize = 20
-TitleLabel.TextColor3 = Color3.new(1,1,1)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Text = ""
-TitleLabel.Visible = false
-TitleLabel.Parent = Header
-
-local columnWidths = {0.25, 0.2, 0.2, 0.15, 0.2}
-local headers = {"Player", "Strength", "Durability", "Kills", "Damage"}
-local headerLabels = {}
-
-for i, text in ipairs(headers) do
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
-    lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
-    lbl.Text = text
-    lbl.Font = Enum.Font.SourceSansBold
-    lbl.TextSize = 20
-    lbl.TextColor3 = Color3.new(1,1,1)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Center
-    lbl.Parent = Header
-    table.insert(headerLabels, lbl)
+local function getDurability(plr: Player)
+	-- Procura Durability em leaderstats ou diretamente no Player
+	-- Retorna número (0 se não achar)
+	local ok, val = pcall(function()
+		local ls = plr:FindFirstChild("leaderstats")
+		if ls then
+			local d = ls:FindFirstChild("Durability") or ls:FindFirstChild("DURABILITY") or ls:FindFirstChild("Dur")
+			if d and d.Value then return tonumber(d.Value) or 0 end
+		end
+		local d2 = plr:FindFirstChild("Durability") or plr:FindFirstChild("DURABILITY")
+		if d2 and d2.Value then return tonumber(d2.Value) or 0 end
+		return 0
+	end)
+	return ok and val or 0
 end
 
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
-MinimizeButton.Position = UDim2.new(1, -35, 0, 0)
-MinimizeButton.Text = "-"
-MinimizeButton.Font = Enum.Font.SourceSansBold
-MinimizeButton.TextSize = 20
-MinimizeButton.TextColor3 = Color3.new(1,1,1)
-MinimizeButton.BackgroundTransparency = 1
-MinimizeButton.Parent = Header
+local function getStrength(plr: Player)
+	-- Usado só para estimar "Can Kill" (placeholder)
+	local ls = plr:FindFirstChild("leaderstats")
+	if ls then
+		local s = ls:FindFirstChild("Strength") or ls:FindFirstChild("STR") or ls:FindFirstChild("Power")
+		if s and tonumber(s.Value) then return tonumber(s.Value) end
+	end
+	return 0
+end
 
-local minimized = false
+--=========================
+-- UI (construída via código para rodar em qualquer lugar)
+--=========================
+local gui = Instance.new("ScreenGui")
+gui.Name = "TrollPanel"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = false
+gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local PlayerListFrame = Instance.new("ScrollingFrame")
-PlayerListFrame.Size = UDim2.new(1, -10, 1, -50)
-PlayerListFrame.Position = UDim2.new(0, 5, 0, 45)
-PlayerListFrame.CanvasSize = UDim2.new(0,0,0,0)
-PlayerListFrame.ScrollBarThickness = 6
-PlayerListFrame.BackgroundTransparency = 1
-PlayerListFrame.Parent = Frame
+-- Fundo/Topo
+local top = Instance.new("Frame")
+top.Name = "TopBar"
+top.Size = UDim2.fromScale(0.85, 0.22)
+top.Position = UDim2.fromScale(0.075, 0.02)
+top.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+top.BorderSizePixel = 0
+top.Parent = gui
 
-MinimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        MinimizeButton.Text = "+"
-        Frame.Size = UDim2.new(0, 700, 0, 40)
-        PlayerListFrame.Visible = false
-        TitleLabel.Visible = true
-        TitleLabel.Text = "Sad v1.0.0.2 | See Stats"
-        for _, lbl in ipairs(headerLabels) do
-            lbl.Visible = false
-        end
-    else
-        MinimizeButton.Text = "-"
-        Frame.Size = UDim2.new(0, 700, 0, 400)
-        PlayerListFrame.Visible = true
-        TitleLabel.Visible = false
-        for _, lbl in ipairs(headerLabels) do
-            lbl.Visible = true
-        end
-    end
+local uiCornerTop = Instance.new("UICorner", top); uiCornerTop.CornerRadius = UDim.new(0, 12)
+local shadow = Instance.new("UIStroke", top); shadow.Thickness = 1; shadow.Color = Color3.fromRGB(60,60,60)
+
+-- Botões pretos no topo
+local function makeTopButton(text, xScale)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.fromScale(0.32, 0.28)
+	b.Position = UDim2.fromScale(xScale, 0.07)
+	b.BackgroundColor3 = Color3.fromRGB(15,15,15)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.TextScaled = true
+	b.Font = Enum.Font.GothamBold
+	b.Text = text
+	b.AutoButtonColor = true
+	b.Parent = top
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+	return b
+end
+
+local btnAutoKillPlayer   = makeTopButton("Auto Kill Player", 0.03)
+local btnDisableAnimPunch = makeTopButton("Disable Animation Punch", 0.34)
+local btnStopAutoKill     = makeTopButton("Stop Auto Kill", 0.65)
+
+-- Botões centrais (verde/vermelho)
+local function makeBigButton(text, color, posScale)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.fromScale(0.35, 0.22)
+	b.Position = UDim2.fromScale(posScale, 0.62)
+	b.BackgroundColor3 = color
+	b.TextColor3 = Color3.new(1,1,1)
+	b.TextScaled = true
+	b.Font = Enum.Font.GothamBold
+	b.Text = text
+	b.AutoButtonColor = true
+	b.Parent = top
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+	return b
+end
+
+local btnKillAll     = makeBigButton("Kill All", Color3.fromRGB(35, 100, 45), 0.12)
+local btnStopKillAll = makeBigButton("Stop Kill All", Color3.fromRGB(110, 35, 35), 0.53)
+
+-- Lista (tabela) de jogadores
+local listHolder = Instance.new("Frame")
+listHolder.Name = "ListHolder"
+listHolder.Size = UDim2.fromScale(0.92, 0.62)
+listHolder.Position = UDim2.fromScale(0.04, 0.27)
+listHolder.BackgroundTransparency = 1
+listHolder.Parent = gui
+
+local list = Instance.new("ScrollingFrame")
+list.Size = UDim2.fromScale(1,1)
+list.CanvasSize = UDim2.new()
+list.ScrollBarThickness = 6
+list.BackgroundTransparency = 1
+list.Parent = listHolder
+
+local layout = Instance.new("UIListLayout", list)
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.Padding = UDim.new(0, 4)
+
+-- Template de linha
+local function createRow()
+	local row = Instance.new("Frame")
+	row.Name = "Row"
+	row.Size = UDim2.new(1, 0, 0, 42)
+	row.BackgroundColor3 = Color3.fromRGB(90, 30, 225) -- roxo/azulado como na imagem
+	row.BorderSizePixel = 0
+	Instance.new("UICorner", row).CornerRadius = UDim.new(0,6)
+
+	-- Nome
+	local nameLbl = Instance.new("TextLabel")
+	nameLbl.Name = "PlayerName"
+	nameLbl.Size = UDim2.fromScale(0.24, 1)
+	nameLbl.Position = UDim2.fromScale(0.02, 0)
+	nameLbl.BackgroundTransparency = 1
+	nameLbl.Font = Enum.Font.GothamBold
+	nameLbl.TextScaled = true
+	nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+	nameLbl.TextColor3 = Color3.new(1,1,1)
+	nameLbl.Parent = row
+
+	-- Durability
+	local duraLbl = Instance.new("TextLabel")
+	duraLbl.Name = "Durability"
+	duraLbl.Size = UDim2.fromScale(0.36, 1)
+	duraLbl.Position = UDim2.fromScale(0.26, 0)
+	duraLbl.BackgroundTransparency = 1
+	duraLbl.Font = Enum.Font.GothamBold
+	duraLbl.TextScaled = true
+	duraLbl.TextXAlignment = Enum.TextXAlignment.Left
+	duraLbl.TextColor3 = Color3.new(0.8, 0.95, 1)
+	duraLbl.Parent = row
+
+	-- "Can Kill" (status)
+	local canKill = Instance.new("TextLabel")
+	canKill.Name = "CanKill"
+	canKill.Size = UDim2.fromScale(0.14, 1)
+	canKill.Position = UDim2.fromScale(0.62, 0)
+	canKill.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+	canKill.TextColor3 = Color3.new(1,1,1)
+	canKill.TextScaled = true
+	canKill.Font = Enum.Font.GothamBold
+	canKill.Text = "Can Kill"
+	Instance.new("UICorner", canKill).CornerRadius = UDim.new(0,6)
+	canKill.Parent = row
+
+	-- Teleport (simulado: “spectate” por 5s)
+	local tp = Instance.new("TextButton")
+	tp.Name = "Teleport"
+	tp.Size = UDim2.fromScale(0.12, 1)
+	tp.Position = UDim2.fromScale(0.76, 0)
+	tp.BackgroundColor3 = Color3.fromRGB(40, 200, 230)
+	tp.TextColor3 = Color3.new(1,1,1)
+	tp.TextScaled = true
+	tp.Font = Enum.Font.GothamBold
+	tp.Text = "Teleport"
+	Instance.new("UICorner", tp).CornerRadius = UDim.new(0,6)
+	tp.Parent = row
+
+	-- Past (apenas botão visual)
+	local past = Instance.new("TextButton")
+	past.Name = "Past"
+	past.Size = UDim2.fromScale(0.12, 1)
+	past.Position = UDim2.fromScale(0.89, 0)
+	past.BackgroundColor3 = Color3.fromRGB(230, 120, 50)
+	past.TextColor3 = Color3.new(1,1,1)
+	past.TextScaled = true
+	past.Font = Enum.Font.GothamBold
+	past.Text = "Past"
+	Instance.new("UICorner", past).CornerRadius = UDim.new(0,6)
+	past.Parent = row
+
+	return row
+end
+
+--=========================
+-- Lógica de lista e botões
+--=========================
+local rowsByUserId: {[number]: Frame} = {}
+
+local function updateRow(plr: Player)
+	if not plr or not plr.Parent then return end
+	local row = rowsByUserId[plr.UserId]
+	if not row then
+		row = createRow()
+		row.Parent = list
+		rowsByUserId[plr.UserId] = row
+
+		-- Ações dos botões por linha
+		row.Teleport.MouseButton1Click:Connect(function()
+			-- Seguro: espectar o jogador 5s (sem teleporte real)
+			local cam = workspace.CurrentCamera
+			local myChar = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			local myHum = myChar:FindFirstChildWhichIsA("Humanoid")
+			local targetChar = plr.Character
+			local targetHum = targetChar and targetChar:FindFirstChildWhichIsA("Humanoid")
+			if targetHum then
+				local oldSubject = cam.CameraSubject
+				cam.CameraSubject = targetHum
+				StarterGui:SetCore("SendNotification", {Title="Teleport (simulado)", Text="Espectando "..plr.Name.." por 5s"; Duration=2})
+				task.delay(5, function()
+					if myHum then cam.CameraSubject = myHum end
+				end)
+			end
+			-- TODO: Teleporte real (se for o seu jogo): mova o HumanoidRootPart do LocalPlayer até o do alvo usando RemoteEvent do servidor
+		end)
+
+		row.Past.MouseButton1Click:Connect(function()
+			print("[Past] Clique em "..plr.Name)
+			-- TODO: Defina o que "Past" deve fazer no seu jogo
+		end)
+	end
+
+	-- Preencher dados
+	local d = getDurability(plr)
+	row.PlayerName.Text = plr.Name
+	row.Durability.Text = "Durability: "..formatNumber(d)
+
+	-- Placeholder: estimativa "Can Kill"
+	local myStr = getStrength(LocalPlayer)
+	if myStr > 0 and d > 0 and myStr >= d then
+		row.CanKill.Text = "Can Kill"
+		row.CanKill.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+	else
+		row.CanKill.Text = "Hard"
+		row.CanKill.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+	end
+end
+
+local function addPlayer(plr: Player)
+	updateRow(plr)
+	-- Observa mudanças de stats para atualizar em tempo real
+	local function watchStats(container)
+		if not container then return end
+		container.ChildAdded:Connect(function()
+			updateRow(plr)
+		end)
+		container.ChildRemoved:Connect(function()
+			updateRow(plr)
+		end)
+		for _, v in ipairs(container:GetChildren()) do
+			if v:IsA("NumberValue") then
+				v:GetPropertyChangedSignal("Value"):Connect(function()
+					updateRow(plr)
+				end)
+			end
+		end
+	end
+	task.defer(function()
+		watchStats(plr:FindFirstChild("leaderstats"))
+		watchStats(plr)
+	end)
+end
+
+local function removePlayer(plr: Player)
+	local row = rowsByUserId[plr.UserId]
+	if row then
+		row:Destroy()
+		rowsByUserId[plr.UserId] = nil
+	end
+end
+
+-- Popular lista inicial
+for _, plr in ipairs(Players:GetPlayers()) do
+	addPlayer(plr)
+end
+Players.PlayerAdded:Connect(addPlayer)
+Players.PlayerRemoving:Connect(removePlayer)
+
+-- Atualização periódica (refina CanKill e Durability)
+RunService.Heartbeat:Connect(function(step)
+	for _, plr in ipairs(Players:GetPlayers()) do
+		updateRow(plr)
+	end
+	-- Ajusta altura do canvas
+	local total = 0
+	for _, child in ipairs(list:GetChildren()) do
+		if child:IsA("Frame") then total += child.AbsoluteSize.Y + layout.Padding.Offset end
+	end
+	list.CanvasSize = UDim2.new(0,0,0, math.max(0, total))
 end)
 
-FloatingButton.MouseButton1Click:Connect(function()
-    Frame.Visible = not Frame.Visible
+--=========================
+-- Botões superiores (placeholders seguros)
+--=========================
+local autoKillOn = false
+btnAutoKillPlayer.MouseButton1Click:Connect(function()
+	autoKillOn = true
+	print("[Auto Kill] ON (placeholder)")
+	StarterGui:SetCore("SendNotification", {Title="Auto Kill", Text="Ligado (simulado)"; Duration=2})
+	-- TODO: sua rotina de auto-kill (no seu jogo, via RemoteEvents)
 end)
 
-local function createPlayerRow(player, index)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 35)
-    row.Position = UDim2.new(0,0,0,(index-1)*35)
-    row.BackgroundColor3 = (index % 2 == 0) and Color3.fromRGB(35, 35, 50) or Color3.fromRGB(25, 25, 40)
-    row.BorderSizePixel = 0
-    row.Parent = PlayerListFrame
+btnStopAutoKill.MouseButton1Click:Connect(function()
+	autoKillOn = false
+	print("[Auto Kill] OFF")
+	StarterGui:SetCore("SendNotification", {Title="Auto Kill", Text="Desligado"; Duration=2})
+end)
 
-    local labels = {}
+local disablePunch = false
+btnDisableAnimPunch.MouseButton1Click:Connect(function()
+	disablePunch = not disablePunch
+	print("[Disable Animation Punch]:", disablePunch)
+	StarterGui:SetCore("SendNotification", {
+		Title="Disable Animation Punch",
+		Text = disablePunch and "Ativado" or "Desativado",
+		Duration=2
+	})
+	-- TODO: aqui você pode desabilitar/anular animações locais do seu jogo
+end)
 
-    for i = 1, #headers do
-        local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(columnWidths[i], 0, 1, 0)
-        lbl.Position = UDim2.new((i == 1 and 0) or (columnWidths[1] + (i > 2 and columnWidths[2] or 0) + (i > 3 and columnWidths[3] or 0) + (i > 4 and columnWidths[4] or 0)), 0, 0, 0)
-        lbl.Font = Enum.Font.SourceSansBold
-        lbl.TextSize = 18
-        lbl.TextColor3 = Color3.new(1,1,1)
-        lbl.BackgroundTransparency = 1
-        lbl.TextXAlignment = (i == 1) and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
-        lbl.Parent = row
-        labels[i] = lbl
-    end
+btnKillAll.MouseButton1Click:Connect(function()
+	print("[Kill All] (placeholder)")
+	StarterGui:SetCore("SendNotification", {Title="Kill All", Text="Comando simulado"; Duration=2})
+	-- TODO: servidor aplicar dano/remoção em todos (se for seu jogo)
+end)
 
-    RunService.Heartbeat:Connect(function()
-        if not player.Parent then return end
-        local stats = player:FindFirstChild("leaderstats")
-        local Strength, Durability, Kills, Damage = 0,0,0,0
-
-        if stats then
-            Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
-            Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
-        end
-
-        Durability = player:FindFirstChild("Durability") and player.Durability.Value or 0
-        Damage = player:FindFirstChild("damage") and player.damage.Value or 0
-
-        local values = {
-            player.Name,
-            formatNumber(Strength),
-            formatNumber(Durability),
-            formatNumber(Kills),
-            formatNumber(Damage)
-        }
-
-        for i, val in ipairs(values) do
-            labels[i].Text = val
-        end
-    end)
-end
-
-local function updateLeaderboard()
-    for _, child in pairs(PlayerListFrame:GetChildren()) do
-        if child:IsA("Frame") then
-            child:Destroy()
-        end
-    end
-
-    local players = Players:GetPlayers()
-    for i, player in ipairs(players) do
-        createPlayerRow(player, i)
-    end
-
-    PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, #players * 35)
-end
-
-Players.PlayerAdded:Connect(updateLeaderboard)
-Players.PlayerRemoving:Connect(updateLeaderboard)
-updateLeaderboard()
+btnStopKillAll.MouseButton1Click:Connect(function()
+	print("[Stop Kill All] (placeholder)")
+	StarterGui:SetCore("SendNotification", {Title="Stop Kill All", Text="Comando simulado"; Duration=2})
+end)
