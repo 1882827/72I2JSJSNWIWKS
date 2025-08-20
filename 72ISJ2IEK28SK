@@ -159,10 +159,10 @@ local function createPlayerRow(player, index)
         if stats then
             Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
             Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
-            Damage = stats:FindFirstChild("Damage") and stats.Damage.Value or 0
         end
 
         Durability = player:FindFirstChild("Durability") and player.Durability.Value or 0
+        Damage = player:FindFirstChild("Damage") and player.Damage.Value or 0
 
         local values = {
             player.Name,
