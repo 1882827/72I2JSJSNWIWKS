@@ -3,19 +3,23 @@ local LocalPlayer = Players.LocalPlayer
 local ThumbType = Enum.ThumbnailType.HeadShot
 local ThumbSize = Enum.ThumbnailSize.Size100x100
 
--- Number format function
 local function formatNumber(num)
-    if not num then return "0" end
+    if not num or num == 0 then 
+        return "0" 
+    end
     local suffixes = {"", "K", "M", "B", "T", "Qa", "Qi"}
     local i = 1
     while num >= 1000 and i < #suffixes do
         num = num / 1000
         i = i + 1
     end
-    return string.format("%.2f%s", num, suffixes[i])
+    if math.floor(num) == num then
+        return string.format("%d%s", num, suffixes[i])
+    else
+        return string.format("%.2f%s", num, suffixes[i])
+    end
 end
 
--- Main Gui
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "SadUI"
 
@@ -29,24 +33,21 @@ mainFrame.Active = true
 mainFrame.Draggable = true
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
--- Top bar
 local topBar = Instance.new("Frame", mainFrame)
 topBar.Size = UDim2.new(1, 0, 0, 35)
 topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 topBar.BorderSizePixel = 0
 Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 6)
 
--- Tab button (KillAura only)
 local killauraBtn = Instance.new("TextButton", topBar)
 killauraBtn.Size = UDim2.new(0, 120, 1, 0)
 killauraBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-killauraBtn.Text = "KillAura"
+killauraBtn.Text = "View Stats"
 killauraBtn.TextColor3 = Color3.fromRGB(255,255,255)
 killauraBtn.Font = Enum.Font.SourceSansBold
 killauraBtn.TextSize = 18
 Instance.new("UICorner", killauraBtn).CornerRadius = UDim.new(0, 6)
 
--- Minimize and Close
 local minimizeBtn = Instance.new("TextButton", topBar)
 minimizeBtn.Size = UDim2.new(0, 35, 1, 0)
 minimizeBtn.Position = UDim2.new(1, -70, 0, 0)
@@ -67,7 +68,6 @@ closeBtn.Font = Enum.Font.SourceSansBold
 closeBtn.TextSize = 20
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
--- Player list
 local playerList = Instance.new("ScrollingFrame", mainFrame)
 playerList.Size = UDim2.new(1, -10, 1, -45)
 playerList.Position = UDim2.new(0, 5, 0, 40)
@@ -79,27 +79,29 @@ local listLayout = Instance.new("UIListLayout", playerList)
 listLayout.Padding = UDim.new(0,4)
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- auto ajustar scroll
 listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     playerList.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- procura recursivamente Durability e Strength
 local function findStat(plr, statName)
-    local obj = plr:FindFirstChild(statName, true)
-    if obj and (obj:IsA("IntValue") or obj:IsA("NumberValue")) then
-        return obj
+    for _,desc in ipairs(plr:GetDescendants()) do
+        if desc.Name == statName and (desc:IsA("IntValue") or desc:IsA("NumberValue")) then
+            return desc
+        end
     end
     return nil
 end
 
--- Function to add player
+local playerFrames = {}
+
 local function addPlayer(plr)
     local frame = Instance.new("Frame", playerList)
     frame.Size = UDim2.new(1, -5, 0, 45)
     frame.BackgroundColor3 = Color3.fromRGB(90,0,180)
     frame.BorderSizePixel = 0
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
+
+    playerFrames[plr] = frame
 
     local thumb = Instance.new("ImageLabel", frame)
     thumb.Size = UDim2.new(0,40,0,40)
@@ -146,20 +148,26 @@ local function addPlayer(plr)
     end
     updateStats()
 
-    -- conecta mudanças
     local d = findStat(plr,"Durability")
     if d then d.Changed:Connect(updateStats) end
     local s = findStat(plr,"Strength")
     if s then s.Changed:Connect(updateStats) end
 end
 
--- Load all players
+local function removePlayer(plr)
+    local frame = playerFrames[plr]
+    if frame then
+        frame:Destroy()
+        playerFrames[plr] = nil
+    end
+end
+
 for _,plr in ipairs(Players:GetPlayers()) do
     addPlayer(plr)
 end
 Players.PlayerAdded:Connect(addPlayer)
+Players.PlayerRemoving:Connect(removePlayer)
 
--- Close and Minimize functions
 closeBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
