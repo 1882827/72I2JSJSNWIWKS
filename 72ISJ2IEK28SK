@@ -9,8 +9,8 @@ gui.Name = "SadUI"
 -- Janela principal
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.fromScale(0.75, 0.75)
-mainFrame.Position = UDim2.fromScale(0.12, 0.12)
+mainFrame.Size = UDim2.fromScale(0.85, 0.85)
+mainFrame.Position = UDim2.fromScale(0.075, 0.075)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 mainFrame.Active = true
 mainFrame.Draggable = true
@@ -30,7 +30,7 @@ titleLabel.BackgroundTransparency = 1
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextScaled = true
 titleLabel.TextColor3 = Color3.new(1,1,1)
-titleLabel.Text = "Sad v1.0.02 | See Stats"
+titleLabel.Text = "Sad v1.0.0.2 | See Stats"
 titleLabel.Parent = titleBar
 
 -- Botão minimizar
@@ -129,6 +129,7 @@ listHolder.BackgroundColor3 = Color3.fromRGB(20,20,20)
 listHolder.BorderSizePixel = 0
 listHolder.ScrollBarThickness = 8
 listHolder.CanvasSize = UDim2.new(0,0,0,0)
+listHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y
 listHolder.Parent = contentFrame
 
 local uiList = Instance.new("UIListLayout", listHolder)
@@ -237,8 +238,8 @@ minimizeBtn.MouseButton1Click:Connect(function()
 		mainFrame.Size = UDim2.fromOffset(titleBar.AbsoluteSize.X, 40)
 	else
 		contentFrame.Visible = true
-		mainFrame.Size = UDim2.fromScale(0.75, 0.75)
-		mainFrame.Position = UDim2.fromScale(0.12, 0.12)
+		mainFrame.Size = UDim2.fromScale(0.85, 0.85)
+		mainFrame.Position = UDim2.fromScale(0.075, 0.075)
 	end
 end)
 
