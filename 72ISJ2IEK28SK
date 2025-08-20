@@ -128,6 +128,20 @@ FloatingButton.MouseButton1Click:Connect(function()
     Frame.Visible = not Frame.Visible
 end)
 
+local function findStatRecursive(player, statName)
+    local function search(obj)
+        for _, child in ipairs(obj:GetChildren()) do
+            if child.Name == statName and child:IsA("IntValue") then
+                return child
+            end
+            local result = search(child)
+            if result then return result end
+        end
+        return nil
+    end
+    return search(player)
+end
+
 local function createPlayerRow(player, index)
     local row = Instance.new("Frame")
     row.Size = UDim2.new(1, 0, 0, 35)
@@ -162,7 +176,9 @@ local function createPlayerRow(player, index)
         end
 
         Durability = player:FindFirstChild("Durability") and player.Durability.Value or 0
-        Damage = player:FindFirstChild("Damage") and player.Damage.Value or 0
+
+        local damageObj = findStatRecursive(player, "Damage")
+        Damage = damageObj and damageObj.Value or 0
 
         local values = {
             player.Name,
