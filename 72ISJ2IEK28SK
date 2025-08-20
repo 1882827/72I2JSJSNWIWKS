@@ -20,13 +20,11 @@ local function formatNumber(num)
 end
 
 local function findStat(plr, statName)
-    -- direto no player
     local stat = plr:FindFirstChild(statName)
     if stat and (stat:IsA("IntValue") or stat:IsA("NumberValue")) then
         return stat
     end
 
-    -- procura em pastas comuns
     local folders = {"leaderstats", "Stats", "PlayerStats", "PlayerData", "Data"}
     for _,folderName in ipairs(folders) do
         local folder = plr:FindFirstChild(folderName)
@@ -38,7 +36,6 @@ local function findStat(plr, statName)
         end
     end
 
-    -- procura no character
     if plr.Character then
         local cStat = plr.Character:FindFirstChild(statName)
         if cStat and (cStat:IsA("IntValue") or cStat:IsA("NumberValue")) then
@@ -71,7 +68,7 @@ Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 6)
 local killauraBtn = Instance.new("TextButton", topBar)
 killauraBtn.Size = UDim2.new(0, 120, 1, 0)
 killauraBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-killauraBtn.Text = "View Stats"
+killauraBtn.Text = "Specs"
 killauraBtn.TextColor3 = Color3.fromRGB(255,255,255)
 killauraBtn.Font = Enum.Font.SourceSansBold
 killauraBtn.TextSize = 18
@@ -216,7 +213,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
         local btn = Instance.new("TextButton", miniFrame)
         btn.Size = UDim2.new(1,0,1,0)
         btn.BackgroundTransparency = 1
-        btn.Text = "Sad v1.0.0.2 | See Stats"
+        btn.Text = "Sad v1.0.0.2 | View Stats"
         btn.Font = Enum.Font.SourceSansBold
         btn.TextSize = 18
         btn.TextColor3 = Color3.fromRGB(0,100,255)
