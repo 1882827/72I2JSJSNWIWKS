@@ -20,17 +20,32 @@ local function formatNumber(num)
 end
 
 local function findStat(plr, statName)
+    -- direto no player
     local stat = plr:FindFirstChild(statName)
     if stat and (stat:IsA("IntValue") or stat:IsA("NumberValue")) then
         return stat
     end
-    local ls = plr:FindFirstChild("leaderstats") or plr:FindFirstChild("Stats")
-    if ls then
-        local s = ls:FindFirstChild(statName)
-        if s and (s:IsA("IntValue") or s:IsA("NumberValue")) then
-            return s
+
+    -- procura em pastas comuns
+    local folders = {"leaderstats", "Stats", "PlayerStats", "PlayerData", "Data"}
+    for _,folderName in ipairs(folders) do
+        local folder = plr:FindFirstChild(folderName)
+        if folder then
+            local s = folder:FindFirstChild(statName)
+            if s and (s:IsA("IntValue") or s:IsA("NumberValue")) then
+                return s
+            end
         end
     end
+
+    -- procura no character
+    if plr.Character then
+        local cStat = plr.Character:FindFirstChild(statName)
+        if cStat and (cStat:IsA("IntValue") or cStat:IsA("NumberValue")) then
+            return cStat
+        end
+    end
+
     return nil
 end
 
