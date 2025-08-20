@@ -83,10 +83,20 @@ listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     playerList.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y + 10)
 end)
 
+-- Busca stats reais
 local function findStat(plr, statName)
-    for _,desc in ipairs(plr:GetDescendants()) do
-        if desc.Name == statName and (desc:IsA("IntValue") or desc:IsA("NumberValue")) then
-            return desc
+    local leaderstats = plr:FindFirstChild("leaderstats")
+    if leaderstats and leaderstats:FindFirstChild(statName) then
+        local stat = leaderstats[statName]
+        if stat:IsA("IntValue") or stat:IsA("NumberValue") then
+            return stat
+        end
+    end
+    local stats = plr:FindFirstChild("Stats")
+    if stats and stats:FindFirstChild(statName) then
+        local stat = stats[statName]
+        if stat:IsA("IntValue") or stat:IsA("NumberValue") then
+            return stat
         end
     end
     return nil
@@ -172,6 +182,11 @@ closeBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
 
+-- Função para gerar cor RGB animada estilo arco-íris
+local function rainbowColor(h)
+    return Color3.fromHSV(h, 1, 1)
+end
+
 local minimized = false
 local miniFrame
 minimizeBtn.MouseButton1Click:Connect(function()
@@ -188,10 +203,31 @@ minimizeBtn.MouseButton1Click:Connect(function()
         local btn = Instance.new("TextButton", miniFrame)
         btn.Size = UDim2.new(1,0,1,0)
         btn.BackgroundTransparency = 1
-        btn.Text = "Sad v1.0.0.2 | See Stats"
         btn.Font = Enum.Font.SourceSansBold
         btn.TextSize = 18
-        btn.TextColor3 = Color3.fromRGB(0,100,255)
+        btn.RichText = true
+
+        -- loop animando as cores
+        task.spawn(function()
+            local hue = 0
+            while btn.Parent do
+                local c1 = rainbowColor(hue)
+                local c2 = rainbowColor((hue+0.2)%1)
+                local c3 = rainbowColor((hue+0.4)%1)
+
+                btn.Text = string.format(
+                    '<font color="rgb(%d,%d,%d)">Sad</font> '..
+                    '<font color="rgb(%d,%d,%d)">v1.0.0.2</font> | '..
+                    '<font color="rgb(%d,%d,%d)">See Stats</font>',
+                    c1.R*255,c1.G*255,c1.B*255,
+                    c2.R*255,c2.G*255,c2.B*255,
+                    c3.R*255,c3.G*255,c3.B*255
+                )
+
+                hue = (hue + 0.01) % 1
+                task.wait(0.05)
+            end
+        end)
 
         btn.MouseButton1Click:Connect(function()
             mainFrame.Visible = true
