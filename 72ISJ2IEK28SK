@@ -19,7 +19,7 @@ Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,8)
 
 -- Barra de título
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1,0,0,35)
+titleBar.Size = UDim2.new(1,0,0,40)
 titleBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
 titleBar.Parent = mainFrame
 Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0,8)
@@ -35,7 +35,7 @@ titleLabel.Parent = titleBar
 
 -- Botão minimizar
 local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0,35,1,0)
+minimizeBtn.Size = UDim2.new(0,40,1,0)
 minimizeBtn.Position = UDim2.new(0.9,0,0,0)
 minimizeBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
 minimizeBtn.Text = "-"
@@ -47,7 +47,7 @@ Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(0,6)
 
 -- Botão fechar
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0,35,1,0)
+closeBtn.Size = UDim2.new(0,40,1,0)
 closeBtn.Position = UDim2.new(0.95,0,0,0)
 closeBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
 closeBtn.Text = "X"
@@ -57,57 +57,74 @@ closeBtn.TextScaled = true
 closeBtn.Parent = titleBar
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,6)
 
--- Conteúdo da janela
+-- Conteúdo
 local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1,0,1,-35)
-contentFrame.Position = UDim2.new(0,0,0,35)
+contentFrame.Size = UDim2.new(1,0,1,-40)
+contentFrame.Position = UDim2.new(0,0,0,40)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Função criar botão
-local function createTopButton(txt,pos)
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(0.32,0,0,40)
-	b.Position = pos
-	b.BackgroundColor3 = Color3.fromRGB(0,0,0)
-	b.Font = Enum.Font.GothamBold
-	b.Text = txt
-	b.TextColor3 = Color3.new(1,1,1)
-	b.TextScaled = true
-	b.Parent = contentFrame
-	return b
-end
-
 -- Botões superiores
-local autoKill = createTopButton("Auto Kill Player", UDim2.new(0.02,0,0,5))
-local stopAutoKill = createTopButton("Stop Auto Kill", UDim2.new(0.34,0,0,5))
-local disableAnim = createTopButton("Disable Animation Punch", UDim2.new(0.66,0,0,5))
+local autoKill = Instance.new("TextButton")
+autoKill.Size = UDim2.new(0.45,0,0,45)
+autoKill.Position = UDim2.new(0.02,0,0,5)
+autoKill.BackgroundColor3 = Color3.fromRGB(0,0,0)
+autoKill.Font = Enum.Font.GothamBold
+autoKill.Text = "Matar Automaticamente o Jogador"
+autoKill.TextColor3 = Color3.new(1,1,1)
+autoKill.TextScaled = true
+autoKill.Parent = contentFrame
+Instance.new("UICorner", autoKill).CornerRadius = UDim.new(0,6)
+
+local disableAnim = Instance.new("TextButton")
+disableAnim.Size = UDim2.new(0.45,0,0,45)
+disableAnim.Position = UDim2.new(0.53,0,0,5)
+disableAnim.BackgroundColor3 = Color3.fromRGB(0,0,0)
+disableAnim.Font = Enum.Font.GothamBold
+disableAnim.Text = "Disable Animation Punch"
+disableAnim.TextColor3 = Color3.new(1,1,1)
+disableAnim.TextScaled = true
+disableAnim.Parent = contentFrame
+Instance.new("UICorner", disableAnim).CornerRadius = UDim.new(0,6)
+
+local stopAutoKill = Instance.new("TextButton")
+stopAutoKill.Size = UDim2.new(0.96,0,0,50)
+stopAutoKill.Position = UDim2.new(0.02,0,0,55)
+stopAutoKill.BackgroundColor3 = Color3.fromRGB(0,0,0)
+stopAutoKill.Font = Enum.Font.GothamBold
+stopAutoKill.Text = "Stop Auto Kill"
+stopAutoKill.TextColor3 = Color3.new(1,1,1)
+stopAutoKill.TextScaled = true
+stopAutoKill.Parent = contentFrame
+Instance.new("UICorner", stopAutoKill).CornerRadius = UDim.new(0,6)
 
 -- Botões Kill All
 local killAll = Instance.new("TextButton")
-killAll.Size = UDim2.new(0.45,0,0,40)
-killAll.Position = UDim2.new(0.02,0,0,55)
-killAll.BackgroundColor3 = Color3.fromRGB(0,100,0)
+killAll.Size = UDim2.new(0.47,0,0,50)
+killAll.Position = UDim2.new(0.02,0,0,110)
+killAll.BackgroundColor3 = Color3.fromRGB(0,150,0)
 killAll.Font = Enum.Font.GothamBold
 killAll.Text = "Kill All"
 killAll.TextColor3 = Color3.new(1,1,1)
 killAll.TextScaled = true
 killAll.Parent = contentFrame
+Instance.new("UICorner", killAll).CornerRadius = UDim.new(0,6)
 
 local stopKillAll = Instance.new("TextButton")
-stopKillAll.Size = UDim2.new(0.45,0,0,40)
-stopKillAll.Position = UDim2.new(0.53,0,0,55)
-stopKillAll.BackgroundColor3 = Color3.fromRGB(100,0,0)
+stopKillAll.Size = UDim2.new(0.47,0,0,50)
+stopKillAll.Position = UDim2.new(0.51,0,0,110)
+stopKillAll.BackgroundColor3 = Color3.fromRGB(150,0,0)
 stopKillAll.Font = Enum.Font.GothamBold
 stopKillAll.Text = "Stop Kill All"
 stopKillAll.TextColor3 = Color3.new(1,1,1)
 stopKillAll.TextScaled = true
 stopKillAll.Parent = contentFrame
+Instance.new("UICorner", stopKillAll).CornerRadius = UDim.new(0,6)
 
--- Lista de players
+-- Lista
 local listHolder = Instance.new("ScrollingFrame")
-listHolder.Size = UDim2.new(1,0,1,-100)
-listHolder.Position = UDim2.new(0,0,0,100)
+listHolder.Size = UDim2.new(1,0,1,-170)
+listHolder.Position = UDim2.new(0,0,0,170)
 listHolder.BackgroundColor3 = Color3.fromRGB(20,20,20)
 listHolder.BorderSizePixel = 0
 listHolder.ScrollBarThickness = 8
@@ -115,7 +132,7 @@ listHolder.CanvasSize = UDim2.new(0,0,0,0)
 listHolder.Parent = contentFrame
 
 local uiList = Instance.new("UIListLayout", listHolder)
-uiList.Padding = UDim.new(0,2)
+uiList.Padding = UDim.new(0,3)
 uiList.FillDirection = Enum.FillDirection.Vertical
 uiList.SortOrder = Enum.SortOrder.LayoutOrder
 
@@ -131,15 +148,16 @@ local function formatNumber(num)
 	return string.format("%.2f%s", num, suffixes[i])
 end
 
--- Criar linha player
+-- Linha player
 local function createPlayerLine(player)
 	local line = Instance.new("Frame")
-	line.Size = UDim2.new(1,0,0,30)
-	line.BackgroundColor3 = Color3.fromRGB(80,0,160)
+	line.Size = UDim2.new(1,0,0,35)
+	line.BackgroundColor3 = Color3.fromRGB(90,0,160)
 	line.Parent = listHolder
+	Instance.new("UICorner", line).CornerRadius = UDim.new(0,6)
 
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(0.2,0,1,0)
+	nameLabel.Size = UDim2.new(0.22,0,1,0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = player.Name
 	nameLabel.Font = Enum.Font.GothamBold
@@ -148,43 +166,46 @@ local function createPlayerLine(player)
 	nameLabel.Parent = line
 
 	local duraLabel = Instance.new("TextLabel")
-	duraLabel.Size = UDim2.new(0.3,0,1,0)
-	duraLabel.Position = UDim2.new(0.2,0,0,0)
+	duraLabel.Size = UDim2.new(0.28,0,1,0)
+	duraLabel.Position = UDim2.new(0.22,0,0,0)
 	duraLabel.BackgroundTransparency = 1
 	duraLabel.Font = Enum.Font.GothamBold
-	duraLabel.TextColor3 = Color3.new(1,1,1)
+	duraLabel.TextColor3 = Color3.new(0.5,1,1)
 	duraLabel.TextScaled = true
 	duraLabel.Parent = line
 
 	local canKill = Instance.new("TextLabel")
-	canKill.Size = UDim2.new(0.15,0,1,0)
+	canKill.Size = UDim2.new(0.18,0,1,0)
 	canKill.Position = UDim2.new(0.5,0,0,0)
-	canKill.BackgroundColor3 = Color3.fromRGB(150,0,0)
+	canKill.BackgroundColor3 = Color3.fromRGB(200,0,0)
 	canKill.Text = "Can Kill"
 	canKill.Font = Enum.Font.GothamBold
 	canKill.TextColor3 = Color3.new(1,1,1)
 	canKill.TextScaled = true
 	canKill.Parent = line
+	Instance.new("UICorner", canKill).CornerRadius = UDim.new(0,4)
 
 	local tpBtn = Instance.new("TextButton")
-	tpBtn.Size = UDim2.new(0.15,0,1,0)
-	tpBtn.Position = UDim2.new(0.65,0,0,0)
+	tpBtn.Size = UDim2.new(0.18,0,1,0)
+	tpBtn.Position = UDim2.new(0.68,0,0,0)
 	tpBtn.BackgroundColor3 = Color3.fromRGB(0,180,220)
-	tpBtn.Text = "Teleport"
+	tpBtn.Text = "Teletransportar"
 	tpBtn.Font = Enum.Font.GothamBold
 	tpBtn.TextColor3 = Color3.new(1,1,1)
 	tpBtn.TextScaled = true
 	tpBtn.Parent = line
+	Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,4)
 
 	local pastBtn = Instance.new("TextButton")
-	pastBtn.Size = UDim2.new(0.15,0,1,0)
-	pastBtn.Position = UDim2.new(0.8,0,0,0)
+	pastBtn.Size = UDim2.new(0.18,0,1,0)
+	pastBtn.Position = UDim2.new(0.86,0,0,0)
 	pastBtn.BackgroundColor3 = Color3.fromRGB(150,50,50)
 	pastBtn.Text = "Past"
 	pastBtn.Font = Enum.Font.GothamBold
 	pastBtn.TextColor3 = Color3.new(1,1,1)
 	pastBtn.TextScaled = true
 	pastBtn.Parent = line
+	Instance.new("UICorner", pastBtn).CornerRadius = UDim.new(0,4)
 
 	RunService.Heartbeat:Connect(function()
 		local dura = player:FindFirstChild("Durability") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Durability"))
@@ -196,7 +217,6 @@ local function createPlayerLine(player)
 	end)
 end
 
--- Preencher lista
 for _,plr in ipairs(Players:GetPlayers()) do
 	if plr ~= LocalPlayer then
 		createPlayerLine(plr)
@@ -214,7 +234,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	if minimized then
 		contentFrame.Visible = false
-		mainFrame.Size = UDim2.fromOffset(titleBar.AbsoluteSize.X, 35)
+		mainFrame.Size = UDim2.fromOffset(titleBar.AbsoluteSize.X, 40)
 	else
 		contentFrame.Visible = true
 		mainFrame.Size = UDim2.fromScale(0.75, 0.75)
