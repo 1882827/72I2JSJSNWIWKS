@@ -1,53 +1,49 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
 
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "SadUI"
 
-local mainFrame = Instance.new("Frame")
+local mainFrame = Instance.new("Frame", gui)
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.fromScale(0.5, 0.6)
-mainFrame.Position = UDim2.fromScale(0.25, 0.2)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.Size = UDim2.fromScale(0.55, 0.65)
+mainFrame.Position = UDim2.fromScale(0.225, 0.15)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
-mainFrame.Parent = gui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
-local corner = Instance.new("UICorner", mainFrame)
-corner.CornerRadius = UDim.new(0, 12)
+-- tabs
+local tabBar = Instance.new("Frame", mainFrame)
+tabBar.Size = UDim2.new(1, 0, 0, 35)
+tabBar.BackgroundTransparency = 1
 
-local titleBar = Instance.new("Frame", mainFrame)
-titleBar.Size = UDim2.new(1, 0, 0, 35)
-titleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-titleBar.BorderSizePixel = 0
+local tabLayout = Instance.new("UIListLayout", tabBar)
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.Padding = UDim.new(0, 4)
 
-local titleCorner = Instance.new("UICorner", titleBar)
-titleCorner.CornerRadius = UDim.new(0, 12)
+local function createTab(name)
+    local btn = Instance.new("TextButton", tabBar)
+    btn.Size = UDim2.new(0, 120, 1, 0)
+    btn.Text = name
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 18
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.BorderSizePixel = 0
+    return btn
+end
 
-local title = Instance.new("TextLabel", titleBar)
-title.Size = UDim2.new(1, -70, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 18
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Text = "Sad v1.0.0.2 | See Stats"
+createTab("Jogador")
+createTab("MatarAura")
+createTab("Teletransportar")
+createTab("Other")
 
-local minimizeBtn = Instance.new("TextButton", titleBar)
-minimizeBtn.Size = UDim2.new(0, 35, 1, 0)
-minimizeBtn.Position = UDim2.new(1, -70, 0, 0)
-minimizeBtn.Text = "-"
-minimizeBtn.Font = Enum.Font.SourceSansBold
-minimizeBtn.TextSize = 20
-minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-minimizeBtn.BorderSizePixel = 0
-
-local closeBtn = Instance.new("TextButton", titleBar)
-closeBtn.Size = UDim2.new(0, 35, 1, 0)
+-- close and minimize
+local closeBtn = Instance.new("TextButton", mainFrame)
+closeBtn.Size = UDim2.new(0, 35, 0, 35)
 closeBtn.Position = UDim2.new(1, -35, 0, 0)
 closeBtn.Text = "X"
 closeBtn.Font = Enum.Font.SourceSansBold
@@ -56,18 +52,37 @@ closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 closeBtn.BorderSizePixel = 0
 
-local contentFrame = Instance.new("Frame", mainFrame)
-contentFrame.Size = UDim2.new(1, -20, 1, -60)
-contentFrame.Position = UDim2.new(0, 10, 0, 45)
-contentFrame.BackgroundTransparency = 1
+local minimizeBtn = Instance.new("TextButton", mainFrame)
+minimizeBtn.Size = UDim2.new(0, 35, 0, 35)
+minimizeBtn.Position = UDim2.new(1, -70, 0, 0)
+minimizeBtn.Text = "-"
+minimizeBtn.Font = Enum.Font.SourceSansBold
+minimizeBtn.TextSize = 20
+minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+minimizeBtn.BorderSizePixel = 0
 
-local layout = Instance.new("UIListLayout", contentFrame)
-layout.Padding = UDim.new(0, 8)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.SortOrder = Enum.SortOrder.LayoutOrder
+-- mask background
+local mask = Instance.new("ImageLabel", mainFrame)
+mask.Size = UDim2.new(0.6, 0, 0.6, 0)
+mask.Position = UDim2.new(0.2, 0, 0.2, 0)
+mask.BackgroundTransparency = 1
+mask.Image = "rbxassetid://11260199177"
+mask.ImageTransparency = 0.2
+
+-- buttons
+local buttonHolder = Instance.new("Frame", mainFrame)
+buttonHolder.Size = UDim2.new(1, -20, 0, 140)
+buttonHolder.Position = UDim2.new(0, 10, 0, 50)
+buttonHolder.BackgroundTransparency = 1
+
+local btnLayout = Instance.new("UIListLayout", buttonHolder)
+btnLayout.Padding = UDim.new(0, 8)
+btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+btnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local function createButton(txt, color)
-    local btn = Instance.new("TextButton")
+    local btn = Instance.new("TextButton", buttonHolder)
     btn.Size = UDim2.new(0.8, 0, 0, 40)
     btn.Text = txt
     btn.Font = Enum.Font.SourceSansBold
@@ -75,19 +90,18 @@ local function createButton(txt, color)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.BackgroundColor3 = color
     btn.BorderSizePixel = 0
-    local c = Instance.new("UICorner", btn)
-    c.CornerRadius = UDim.new(0, 6)
-    btn.Parent = contentFrame
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     return btn
 end
 
-local autoKillBtn = createButton("Stop Auto Kill", Color3.fromRGB(40, 40, 40))
-local killAllBtn = createButton("Kill All", Color3.fromRGB(0, 150, 0))
-local stopKillAllBtn = createButton("Stop Kill All", Color3.fromRGB(150, 0, 0))
+createButton("Stop Auto Kill", Color3.fromRGB(40, 40, 40))
+createButton("Kill All", Color3.fromRGB(0, 150, 0))
+createButton("Stop Kill All", Color3.fromRGB(150, 0, 0))
 
+-- player list
 local playerListFrame = Instance.new("ScrollingFrame", mainFrame)
 playerListFrame.Size = UDim2.new(1, -20, 0.35, 0)
-playerListFrame.Position = UDim2.new(0, 10, 1, -150)
+playerListFrame.Position = UDim2.new(0, 10, 1, -180)
 playerListFrame.BackgroundTransparency = 1
 playerListFrame.BorderSizePixel = 0
 playerListFrame.ScrollBarThickness = 6
@@ -102,12 +116,13 @@ local function updatePlayerList()
     listLayout.Parent = playerListFrame
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
-            local item = Instance.new("Frame")
-            item.Size = UDim2.new(1, 0, 0, 30)
-            item.BackgroundColor3 = Color3.fromRGB(80, 0, 150)
+            local item = Instance.new("Frame", playerListFrame)
+            item.Size = UDim2.new(1, 0, 0, 32)
+            item.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+            Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
 
             local name = Instance.new("TextLabel", item)
-            name.Size = UDim2.new(0.3, 0, 1, 0)
+            name.Size = UDim2.new(0.25, 0, 1, 0)
             name.BackgroundTransparency = 1
             name.Font = Enum.Font.SourceSansBold
             name.TextSize = 16
@@ -117,7 +132,7 @@ local function updatePlayerList()
 
             local stat = Instance.new("TextLabel", item)
             stat.Size = UDim2.new(0.25, 0, 1, 0)
-            stat.Position = UDim2.new(0.3, 0, 0, 0)
+            stat.Position = UDim2.new(0.25, 0, 0, 0)
             stat.BackgroundTransparency = 1
             stat.Font = Enum.Font.SourceSansBold
             stat.TextSize = 16
@@ -127,7 +142,7 @@ local function updatePlayerList()
 
             local canKill = Instance.new("TextLabel", item)
             canKill.Size = UDim2.new(0.2, 0, 1, 0)
-            canKill.Position = UDim2.new(0.55, 0, 0, 0)
+            canKill.Position = UDim2.new(0.5, 0, 0, 0)
             canKill.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
             canKill.Font = Enum.Font.SourceSansBold
             canKill.TextSize = 16
@@ -136,29 +151,24 @@ local function updatePlayerList()
 
             local tpBtn = Instance.new("TextButton", item)
             tpBtn.Size = UDim2.new(0.15, 0, 1, 0)
-            tpBtn.Position = UDim2.new(0.75, 0, 0, 0)
+            tpBtn.Position = UDim2.new(0.7, 0, 0, 0)
             tpBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 200)
             tpBtn.Font = Enum.Font.SourceSansBold
             tpBtn.TextSize = 14
             tpBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-            tpBtn.Text = "Teleport"
+            tpBtn.Text = "Teleportar"
 
             local pastBtn = Instance.new("TextButton", item)
             pastBtn.Size = UDim2.new(0.15, 0, 1, 0)
-            pastBtn.Position = UDim2.new(0.9, 0, 0, 0)
+            pastBtn.Position = UDim2.new(0.85, 0, 0, 0)
             pastBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
             pastBtn.Font = Enum.Font.SourceSansBold
             pastBtn.TextSize = 14
             pastBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             pastBtn.Text = "Past"
-
-            local ic = Instance.new("UICorner", item)
-            ic.CornerRadius = UDim.new(0, 6)
-
-            item.Parent = playerListFrame
         end
     end
-    playerListFrame.CanvasSize = UDim2.new(0,0,0,#Players:GetPlayers() * 34)
+    playerListFrame.CanvasSize = UDim2.new(0,0,0,#Players:GetPlayers() * 36)
 end
 
 Players.PlayerAdded:Connect(updatePlayerList)
@@ -172,6 +182,7 @@ end)
 local minimized = false
 minimizeBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
-    contentFrame.Visible = not minimized
+    buttonHolder.Visible = not minimized
     playerListFrame.Visible = not minimized
+    mask.Visible = not minimized
 end)
