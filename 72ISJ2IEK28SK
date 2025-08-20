@@ -1,314 +1,240 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/MlFrvWM/BBLT81/main/BL81827TC", true))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local ThumbType = Enum.ThumbnailType.HeadShot
+local ThumbSize = Enum.ThumbnailSize.Size100x100
 
-local window = library:AddWindow("Sad v1.0.0 | Farming", {
-    main_color = Color3.fromRGB(20, 82, 24),
-    min_size = Vector2.new(550, 450),
-    can_resize = false,
-})
-
-local tabFarming = window:AddTab("Farming")
-
-tabFarming:AddLabel("Fast Farming").TextSize = 25
-
-local player = game.Players.LocalPlayer
-local muscleEvent = player:WaitForChild("muscleEvent")
-local runFastRep = false
-local repsPerTick = 1
-
-local function getPing()
-    local stats = game:GetService("Stats")
-    local pingStat = stats:FindFirstChild("PerformanceStats") and stats.PerformanceStats:FindFirstChild("Ping")
-    return pingStat and pingStat:GetValue() or 0
-end
-
-tabFarming:AddTextBox("Rep Speed", function(value)
-    local num = tonumber(value)
-    if num and num > 0 then
-        repsPerTick = math.floor(num)
+local function formatNumber(num)
+    if not num or num == 0 then return "0" end
+    local suffixes = {"", "K", "M", "B", "T", "Qa", "Qi"}
+    local i = 1
+    while num >= 1000 and i < #suffixes do
+        num = num / 1000
+        i = i + 1
     end
-end, {
-    placeholder = "1",
-})
-
-local function fastRepLoop()
-    while runFastRep do
-        local startTime = tick()
-        while tick() - startTime < 0.75 and runFastRep do
-            for i = 1, repsPerTick do
-                muscleEvent:FireServer("rep")
-            end
-            task.wait(0.02)
-            task.defer(task.wait, 0)
-        end
-
-        while runFastRep and getPing() >= 100 do
-            task.wait(1)
-        end
-    end
-end
-
-tabFarming:AddSwitch("Fast Rep", function(state)
-    runFastRep = state
-    if runFastRep then
-        task.spawn(fastRepLoop)
+    if math.floor(num) == num then
+        return string.format("%d%s", num, suffixes[i])
     else
-        print("Fast Rep desativado")
-    end
-end)
-
-tabFarming:AddLabel("Useful").TextSize = 20
-
-local autoEatEnabled = false
-local lastEggTime = 0
-local eggCooldown = 1800
-
-local function eatProteinEgg()
-    if tick() - lastEggTime < eggCooldown then return end
-
-    local player = game.Players.LocalPlayer
-    local backpack = player:WaitForChild("Backpack")
-    task.wait(0.1)
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local egg = backpack:FindFirstChild("Protein Egg")
-    if egg then
-        egg.Parent = character
-        task.wait(0.1)
-        pcall(function()
-            egg:Activate()
-        end)
-        lastEggTime = tick()
-        print("[Auto Eat Egg] Consumiu 1 ovo. Próximo em 30 min.")
+        return string.format("%.2f%s", num, suffixes[i])
     end
 end
 
-task.spawn(function()
-    while true do
-        if autoEatEnabled then
-            eatProteinEgg()
-            task.wait(30)
-        else
-            task.wait(1)
-        end
-    end
-end)
-
-tabFarming:AddSwitch("Auto Eat Egg", function(state)
-    autoEatEnabled = state
-    if state then
-        print("[Auto Eat Egg] Ativado. Verificando a cada 30 minutos.")
-    else
-        print("[Auto Eat Egg] Desativado.")
-    end
-end)
-
-tabFarming:AddSwitch("Hide All Frames", function(bool)
-    local rSto = game:GetService("ReplicatedStorage")
-    for _, obj in pairs(rSto:GetChildren()) do
-        if obj.Name:match("Frame$") then
-            obj.Visible = not bool
-        end
-    end
-end)
-
-tabFarming:AddButton("Anti Lag", function()
-    local player = game.Players.LocalPlayer
-    local playerGui = player:WaitForChild("PlayerGui")
-    local lighting = game:GetService("Lighting")
-
-    for _, gui in pairs(playerGui:GetChildren()) do
-        if gui:IsA("ScreenGui") then
-            gui:Destroy()
-        end
+local function findStat(plr, statName)
+    local stat = plr:FindFirstChild(statName)
+    if stat and (stat:IsA("IntValue") or stat:IsA("NumberValue")) then
+        return stat
     end
 
-    local function darkenSky()
-        for _, v in pairs(lighting:GetChildren()) do
-            if v:IsA("Sky") then
-                v:Destroy()
+    local folders = {"leaderstats", "Stats", "PlayerStats", "PlayerData", "Data"}
+    for _,folderName in ipairs(folders) do
+        local folder = plr:FindFirstChild(folderName)
+        if folder then
+            local s = folder:FindFirstChild(statName)
+            if s and (s:IsA("IntValue") or s:IsA("NumberValue")) then
+                return s
             end
         end
+    end
 
-        local darkSky = Instance.new("Sky")
-        darkSky.Name = "DarkSky"
-        darkSky.SkyboxBk = "rbxassetid://0"
-        darkSky.SkyboxDn = "rbxassetid://0"
-        darkSky.SkyboxFt = "rbxassetid://0"
-        darkSky.SkyboxLf = "rbxassetid://0"
-        darkSky.SkyboxRt = "rbxassetid://0"
-        darkSky.SkyboxUp = "rbxassetid://0"
-        darkSky.Parent = lighting
+    if plr.Character then
+        local cStat = plr.Character:FindFirstChild(statName)
+        if cStat and (cStat:IsA("IntValue") or cStat:IsA("NumberValue")) then
+            return cStat
+        end
+    end
 
-        lighting.Brightness = 0
-        lighting.ClockTime = 0
-        lighting.TimeOfDay = "00:00:00"
-        lighting.OutdoorAmbient = Color3.new(0, 0, 0)
-        lighting.Ambient = Color3.new(0, 0, 0)
-        lighting.FogColor = Color3.new(0, 0, 0)
-        lighting.FogEnd = 100
+    return nil
+end
+
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "SadUI"
+
+local mainFrame = Instance.new("Frame", gui)
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.fromScale(0.55, 0.65)
+mainFrame.Position = UDim2.fromScale(0.225, 0.15)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
+
+local topBar = Instance.new("Frame", mainFrame)
+topBar.Size = UDim2.new(1, 0, 0, 35)
+topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+topBar.BorderSizePixel = 0
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 6)
+
+local killauraBtn = Instance.new("TextButton", topBar)
+killauraBtn.Size = UDim2.new(0, 120, 1, 0)
+killauraBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+killauraBtn.Text = "Specs"
+killauraBtn.TextColor3 = Color3.fromRGB(255,255,255)
+killauraBtn.Font = Enum.Font.SourceSansBold
+killauraBtn.TextSize = 18
+Instance.new("UICorner", killauraBtn).CornerRadius = UDim.new(0, 6)
+
+local minimizeBtn = Instance.new("TextButton", topBar)
+minimizeBtn.Size = UDim2.new(0, 35, 1, 0)
+minimizeBtn.Position = UDim2.new(1, -70, 0, 0)
+minimizeBtn.Text = "-"
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeBtn.Font = Enum.Font.SourceSansBold
+minimizeBtn.TextSize = 20
+Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(0, 6)
+
+local closeBtn = Instance.new("TextButton", topBar)
+closeBtn.Size = UDim2.new(0, 35, 1, 0)
+closeBtn.Position = UDim2.new(1, -35, 0, 0)
+closeBtn.Text = "X"
+closeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 20
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+
+local playerList = Instance.new("ScrollingFrame", mainFrame)
+playerList.Size = UDim2.new(1, -10, 1, -45)
+playerList.Position = UDim2.new(0, 5, 0, 40)
+playerList.CanvasSize = UDim2.new(0,0,0,0)
+playerList.ScrollBarThickness = 6
+playerList.BackgroundTransparency = 1
+
+local listLayout = Instance.new("UIListLayout", playerList)
+listLayout.Padding = UDim.new(0,4)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    playerList.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local playerFrames = {}
+
+local function addPlayer(plr)
+    local frame = Instance.new("Frame", playerList)
+    frame.Size = UDim2.new(1, -5, 0, 45)
+    frame.BackgroundColor3 = Color3.fromRGB(90,0,180)
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
+    playerFrames[plr] = frame
+
+    local thumb = Instance.new("ImageLabel", frame)
+    thumb.Size = UDim2.new(0,40,0,40)
+    thumb.Position = UDim2.new(0,3,0.5,-20)
+    thumb.BackgroundTransparency = 1
+    local content, _ = Players:GetUserThumbnailAsync(plr.UserId, ThumbType, ThumbSize)
+    thumb.Image = content
+
+    local nameLabel = Instance.new("TextLabel", frame)
+    nameLabel.Size = UDim2.new(0.45,0,1,0)
+    nameLabel.Position = UDim2.new(0,50,0,0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = plr.DisplayName .. " (@"..plr.Name..")"
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    nameLabel.TextSize = 16
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local durability = Instance.new("TextLabel", frame)
+    durability.Size = UDim2.new(0.25,0,1,0)
+    durability.Position = UDim2.new(0.55,0,0,0)
+    durability.BackgroundTransparency = 1
+    durability.Text = "Durability: 0"
+    durability.Font = Enum.Font.SourceSansBold
+    durability.TextColor3 = Color3.fromRGB(0,200,255)
+    durability.TextSize = 16
+    durability.TextXAlignment = Enum.TextXAlignment.Left
+
+    local strength = Instance.new("TextLabel", frame)
+    strength.Size = UDim2.new(0.25,0,1,0)
+    strength.Position = UDim2.new(0.8,0,0,0)
+    strength.BackgroundTransparency = 1
+    strength.Text = "Strength: 0"
+    strength.Font = Enum.Font.SourceSansBold
+    strength.TextColor3 = Color3.fromRGB(255,150,0)
+    strength.TextSize = 16
+    strength.TextXAlignment = Enum.TextXAlignment.Left
+
+    local function updateStats()
+        local d = findStat(plr,"Durability")
+        if d then durability.Text = "Durability: "..formatNumber(d.Value) end
+        local s = findStat(plr,"Strength")
+        if s then strength.Text = "Strength: "..formatNumber(s.Value) end
+    end
+
+    updateStats()
+
+    local d = findStat(plr,"Durability")
+    if d then d.Changed:Connect(updateStats) end
+    local s = findStat(plr,"Strength")
+    if s then s.Changed:Connect(updateStats) end
+
+    plr.ChildAdded:Connect(function(obj)
+        if obj.Name == "Durability" or obj.Name == "Strength" then
+            updateStats()
+            if obj:IsA("IntValue") or obj:IsA("NumberValue") then
+                obj.Changed:Connect(updateStats)
+            end
+        end
+    end)
+end
+
+local function removePlayer(plr)
+    local frame = playerFrames[plr]
+    if frame then
+        frame:Destroy()
+        playerFrames[plr] = nil
+    end
+end
+
+for _,plr in ipairs(Players:GetPlayers()) do
+    addPlayer(plr)
+end
+Players.PlayerAdded:Connect(addPlayer)
+Players.PlayerRemoving:Connect(removePlayer)
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+local minimized = false
+local miniFrame
+minimizeBtn.MouseButton1Click:Connect(function()
+    if not minimized then
+        mainFrame.Visible = false
+        miniFrame = Instance.new("Frame", gui)
+        miniFrame.Size = UDim2.new(0,250,0,40)
+        miniFrame.Position = UDim2.new(0.35,0,0,10)
+        miniFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        miniFrame.Active = true
+        miniFrame.Draggable = true
+        Instance.new("UICorner", miniFrame).CornerRadius = UDim.new(0,8)
+
+        local btn = Instance.new("TextButton", miniFrame)
+        btn.Size = UDim2.new(1,0,1,0)
+        btn.BackgroundTransparency = 1
+        btn.Text = "Sad v1.0.0.2 | View Stats"
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 18
+        btn.TextColor3 = Color3.fromRGB(0,100,255)
 
         task.spawn(function()
-            while true do
-                wait(5)
-                if not lighting:FindFirstChild("DarkSky") then
-                    darkSky:Clone().Parent = lighting
-                end
-                lighting.Brightness = 0
-                lighting.ClockTime = 0
-                lighting.OutdoorAmbient = Color3.new(0, 0, 0)
-                lighting.Ambient = Color3.new(0, 0, 0)
-                lighting.FogColor = Color3.new(0, 0, 0)
-                lighting.FogEnd = 100
+            while btn.Parent do
+                local t = tick()
+                local r = math.sin(t*2) * 127 + 128
+                local g = math.sin(t*2 + 2) * 127 + 128
+                local b = math.sin(t*2 + 4) * 127 + 128
+                btn.TextColor3 = Color3.fromRGB(r,g,b)
+                task.wait(0.1)
             end
         end)
-    end
 
-    local function removeParticleEffects()
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("ParticleEmitter") then
-                obj:Destroy()
-            end
-        end
-    end
+        btn.MouseButton1Click:Connect(function()
+            mainFrame.Visible = true
+            miniFrame:Destroy()
+            minimized = false
+        end)
 
-    local function removeLightSources()
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
-                obj:Destroy()
-            end
-        end
-    end
-
-    removeParticleEffects()
-    removeLightSources()
-    darkenSky()
-end)
-
-tabFarming:AddLabel("Pets").TextSize = 20
-
-tabFarming:AddButton("Equip Swift Samurai", function()
-    local petsFolder = game.Players.LocalPlayer.petsFolder
-
-    for _, folder in pairs(petsFolder:GetChildren()) do
-        if folder:IsA("Folder") then
-            for _, pet in pairs(folder:GetChildren()) do
-                game:GetService("ReplicatedStorage").rEvents.equipPetEvent:FireServer("unequipPet", pet)
-            end
-        end
-    end
-    task.wait(0.2)
-
-    local petsToEquip = {}
-    for _, pet in pairs(petsFolder.Unique:GetChildren()) do
-        if pet.Name == "Swift Samurai" then
-            table.insert(petsToEquip, pet)
-        end
-    end
-
-    for i = 1, math.min(8, #petsToEquip) do
-        game:GetService("ReplicatedStorage").rEvents.equipPetEvent:FireServer("equipPet", petsToEquip[i])
-        task.wait(0.1)
-    end
-end)
-
-local statsTab = window:AddTab("Stats")
-
-local player = game.Players.LocalPlayer
-local leaderstats = player:WaitForChild("leaderstats")
-local strengthStat = leaderstats:WaitForChild("Strength")
-local durabilityStat = player:WaitForChild("Durability")
-
-local function formatNumber(number)
-    local isNegative = number < 0
-    number = math.abs(number)
-
-    if number >= 1e15 then
-        return (isNegative and "-" or "") .. string.format("%.2fQa", number / 1e15)
-    elseif number >= 1e12 then
-        return (isNegative and "-" or "") .. string.format("%.2fT", number / 1e12)
-    elseif number >= 1e9 then
-        return (isNegative and "-" or "") .. string.format("%.2fB", number / 1e9)
-    elseif number >= 1e6 then
-        return (isNegative and "-" or "") .. string.format("%.2fM", number / 1e6)
-    elseif number >= 1e3 then
-        return (isNegative and "-" or "") .. string.format("%.2fK", number / 1e3)
-    else
-        return (isNegative and "-" or "") .. string.format("%.2f", number)
-    end
-end
-
-local timeLabel = statsTab:AddLabel("â±ï¸ Time:")
-timeLabel.TextSize = 24
-
-local stopwatchLabel = statsTab:AddLabel("0d 0h 0m 0s")
-stopwatchLabel.TextSize = 20
-
-statsTab:AddLabel("").TextSize = 10
-
-local projectedLabel = statsTab:AddLabel("ðŸ“Š Projected Pace")
-projectedLabel.TextSize = 24
-
-local projectedStrengthLabel = statsTab:AddLabel("Strength Pace: 0 /Hour | 0 /Day")
-projectedStrengthLabel.TextSize = 20
-
-local projectedDurabilityLabel = statsTab:AddLabel("Durability Pace: 0 /Hour | 0 /Day")
-projectedDurabilityLabel.TextSize = 20
-
-statsTab:AddLabel("").TextSize = 10
-
-local statsLabel = statsTab:AddLabel("ðŸ’ª Current Stats")
-statsLabel.TextSize = 24
-
-local strengthLabel = statsTab:AddLabel("Strength: 0 | Gained: 0")
-strengthLabel.TextSize = 20
-
-local durabilityLabel = statsTab:AddLabel("Durability: 0 | Gained: 0")
-durabilityLabel.TextSize = 20
-
-local startTime = tick()
-local initialStrength = strengthStat.Value
-local initialDurability = durabilityStat.Value
-
-task.spawn(function()
-    local lastUpdate = 0
-
-    while true do
-        local currentTime = tick()
-        local elapsedTime = currentTime - startTime
-        local days = math.floor(elapsedTime / (24 * 3600))
-        local hours = math.floor((elapsedTime % (24 * 3600)) / 3600)
-        local minutes = math.floor((elapsedTime % 3600) / 60)
-        local seconds = math.floor(elapsedTime % 60)
-
-        stopwatchLabel.Text = string.format("%dd %dh %dm %ds", days, hours, minutes, seconds)
-
-        local currentStrength = strengthStat.Value
-        local currentDurability = durabilityStat.Value
-
-        local sessionStrengthDelta = currentStrength - initialStrength
-        local sessionDurabilityDelta = currentDurability - initialDurability
-
-        strengthLabel.Text = "Strength: " .. formatNumber(currentStrength) .. " | Gained: " .. formatNumber(sessionStrengthDelta)
-        durabilityLabel.Text = "Durability: " .. formatNumber(currentDurability) .. " | Gained: " .. formatNumber(sessionDurabilityDelta)
-
-        if currentTime - lastUpdate >= 6 then
-            lastUpdate = currentTime
-
-            local strengthPerSecond = sessionStrengthDelta / elapsedTime
-            local durabilityPerSecond = sessionDurabilityDelta / elapsedTime
-
-            local secondsPerHour = 3600
-            local secondsPerDay = 86400
-
-            local strengthPerHour = math.floor(strengthPerSecond * secondsPerHour)
-            local durabilityPerHour = math.floor(durabilityPerSecond * secondsPerHour)
-
-            local projectedStrength = math.floor(strengthPerSecond * secondsPerDay)
-            local projectedDurability = math.floor(durabilityPerSecond * secondsPerDay)
-
-            projectedStrengthLabel.Text = "Strength Pace: " .. formatNumber(strengthPerHour) .. "/Hour | " .. formatNumber(projectedStrength) .. "/Day"
-            projectedDurabilityLabel.Text = "Durability Pace: " .. formatNumber(durabilityPerHour) .. "/Hour | " .. formatNumber(projectedDurability) .. "/Day"
-        end
-        task.wait(0.05)
+        minimized = true
     end
 end)
