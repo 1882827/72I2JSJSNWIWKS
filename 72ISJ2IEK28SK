@@ -154,13 +154,16 @@ local function createPlayerRow(player, index)
     RunService.Heartbeat:Connect(function()
         if not player.Parent then return end
         local stats = player:FindFirstChild("leaderstats")
+        local otherStats = player:FindFirstChild("Stats")
         local Strength, Durability, Kills, Damage = 0,0,0,0
         if stats then
             Strength = stats:FindFirstChild("Strength") and stats.Strength.Value or 0
             Kills = stats:FindFirstChild("Kills") and stats.Kills.Value or 0
         end
-        Durability = player:FindFirstChild("Durability") and player.Durability.Value or 0
-        Damage = player:FindFirstChild("Damage") and player.Damage.Value or 0
+        if otherStats then
+            Durability = otherStats:FindFirstChild("Durability") and otherStats.Durability.Value or 0
+            Damage = otherStats:FindFirstChild("Damage") and otherStats.Damage.Value or 0
+        end
 
         local values = {
             player.Name,
