@@ -162,7 +162,7 @@ local function createPlayerRow(player, index)
         end
 
         Durability = player:FindFirstChild("Durability") and player.Durability.Value or 0
-        Damage = player:FindFirstChild("Damage") and player.Damage.Value or 0
+        Damage = player:FindFirstChild("damage") and player.damage.Value or 0
 
         local values = {
             player.Name,
